@@ -93,6 +93,40 @@ function ReelCard({ reel }) {
     }
   };
 
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadReel = async (e) => {
+    if (e) e.stopPropagation();
+    if (!reel?.media || isDownloading) return;
+    setIsDownloading(true);
+
+    try {
+      const response = await fetch(reel.media);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      const cleanUsername = authorUsername || "user";
+      link.download = `Vistagram_Reel_${cleanUsername}_${Date.now()}.mp4`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Reel fetch download failed, fallback:", err);
+      const link = document.createElement("a");
+      link.href = reel.media;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.download = `Vistagram_Reel_${authorUsername || "reel"}.mp4`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   useEffect(() => {
     if (reel?.comments) {
       setCommentsList(reel.comments);
