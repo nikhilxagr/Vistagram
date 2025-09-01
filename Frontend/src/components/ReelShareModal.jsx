@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { serverUrl } from "../App";
 import dp from "../assets/dp.png";
-import { FiX, FiSearch, FiSend, FiLink } from "react-icons/fi";
+import { FiX, FiSearch, FiSend, FiLink, FiDownload } from "react-icons/fi";
 import { setSelectedUser } from "../redux/message.Slice";
 import { ClipLoader } from "react-spinners";
 
@@ -18,6 +18,7 @@ function ReelShareModal({ reel, onClose }) {
   const [sentTo, setSentTo] = useState(new Set());
   const [sending, setSending] = useState({}); 
   const [linkCopied, setLinkCopied] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const inputRef = useRef(null);
   const drawerRef = useRef(null);
@@ -96,6 +97,36 @@ function ReelShareModal({ reel, onClose }) {
     });
   };
 
+  const handleDirectDownload = async () => {
+    if (!reel?.media || isDownloading) return;
+    setIsDownloading(true);
+    try {
+      const res = await fetch(reel.media);
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      const isVideo = reel.mediaType === "video" || reel.media?.match(/\.(mp4|mov|webm|mkv)/i);
+      const ext = isVideo ? ".mp4" : ".jpg";
+      link.download = `Vistagram_${reel?.author?.username || "media"}_${Date.now()}${ext}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      const link = document.createElement("a");
+      link.href = reel.media;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.download = `Vistagram_${reel?.author?.username || "download"}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="absolute inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm">
       <div
@@ -113,7 +144,7 @@ function ReelShareModal({ reel, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-gray-800/80">
           <h3 className="text-sm font-bold text-white tracking-wide">
-            {reel?.mediaType === "video" ? "Share Reel" : "Share Post"}
+            {reel?.mediaType === "video" ? "Share & Download Reel" : "Share & Download Post"}
           </h3>
           <button
             onClick={onClose}
@@ -123,17 +154,30 @@ function ReelShareModal({ reel, onClose }) {
           </button>
         </div>
 
-        {/* Copy Link Button */}
-        <div className="px-5 pt-4 pb-2">
+        {/* Quick Actions (Copy Link & Direct Download) */}
+        <div className="grid grid-cols-2 gap-2.5 px-5 pt-4 pb-2">
           <button
             onClick={handleCopyLink}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-gray-900 border border-gray-800 hover:bg-gray-800 transition cursor-pointer group"
+            className="flex items-center justify-center gap-2.5 px-3 py-3 rounded-2xl bg-gray-900 border border-gray-800 hover:bg-gray-800 transition cursor-pointer group"
           >
-            <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 flex-shrink-0 group-hover:border-gray-600 transition">
-              <FiLink size={18} className="text-white" />
+            <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 flex-shrink-0 group-hover:border-gray-600 transition">
+              <FiLink size={15} className="text-white" />
             </div>
-            <span className="text-sm font-semibold text-white">
-              {linkCopied ? "✅ Link Copied!" : "Copy Link"}
+            <span className="text-xs font-semibold text-white truncate">
+              {linkCopied ? "✅ Copied!" : "Copy Link"}
+            </span>
+          </button>
+
+          <button
+            onClick={handleDirectDownload}
+            disabled={isDownloading}
+            className="flex items-center justify-center gap-2.5 px-3 py-3 rounded-2xl bg-gray-900 border border-gray-800 hover:bg-gray-800 hover:border-green-500/40 transition cursor-pointer group disabled:opacity-50"
+          >
+            <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 flex-shrink-0 group-hover:border-green-500 transition">
+              <FiDownload size={15} className={`text-green-400 ${isDownloading ? "animate-bounce" : ""}`} />
+            </div>
+            <span className="text-xs font-semibold text-green-400 truncate">
+              {isDownloading ? "Downloading..." : "Download"}
             </span>
           </button>
         </div>
