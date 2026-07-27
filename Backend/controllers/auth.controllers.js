@@ -7,6 +7,10 @@ export const signup = async (req, res) => {
     const { name, email, password } = req.body;
     const username = req.body.username || req.body.userName;
 
+    if (!name || !email || !password || !username) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "Email already exists" });
@@ -17,7 +21,7 @@ export const signup = async (req, res) => {
       return res.status(400).json({ message: "Username already exists" });
     }
 
-    if(password.length < 6){
+    if (password.length < 6) {
       return res.status(400).json({ message: "Password must be at least 6 characters long" });
     }
 
@@ -38,6 +42,7 @@ export const signup = async (req, res) => {
     });
     res.status(201).json({ message: "User created successfully", user });
   } catch (error) {
+    console.error("Error in signup controller:", error);
     res.status(500).json({ message: "Signup failed" });
   }
 };

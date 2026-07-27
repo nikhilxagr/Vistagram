@@ -6,11 +6,12 @@ import axios from "axios";
 import { serverUrl } from "../App.jsx";
 import logo2 from "../assets/logo2.png";
 import { useNavigate } from "react-router-dom";
-import ClipLoader from "react-spinners/ClipLoader";
+import { ClipLoader } from "react-spinners";
 
 function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [name, setName] = useState("");
   const [userName, setUserName] = useState("");
   const [email, setEmail] = useState("");
@@ -18,8 +19,9 @@ function SignUp() {
   const navigate = useNavigate();
 
   const handleSignUp = async (e) => {
-    setLoading(true);
     e.preventDefault();
+    setError("");
+    setLoading(true);
     try {
       const result = await axios.post(
         `${serverUrl}/api/auth/signup`,
@@ -32,9 +34,11 @@ function SignUp() {
         { withCredentials: true },
       );
       console.log(result.data);
+      navigate("/signin");
     }
-    catch (error) {
-      console.error("Error signing up:", error);
+    catch (err) {
+      console.error("Error signing up:", err);
+      setError(err.response?.data?.message || "Signup failed. Please try again.");
     }
     finally {
       setLoading(false);
@@ -61,6 +65,11 @@ function SignUp() {
             onSubmit={handleSignUp}
             className="w-full max-w-[420px] flex flex-col gap-[22px]"
           >
+            {error && (
+              <div className="w-full py-2 px-3 bg-red-100 border border-red-400 text-red-700 text-xs font-semibold rounded-lg text-center">
+                {error}
+              </div>
+            )}
             <div className="relative w-full">
               <label
                 htmlFor="name"
