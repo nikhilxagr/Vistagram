@@ -7,16 +7,18 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
 import useGetCurrentUser from "./hooks/useGetCurrentUser";
 import { ClipLoader } from "react-spinners";
+import useGetSuggestedUsers from "./hooks/getSuggestedUsers";
 
 export const serverUrl = "http://localhost:8000";
 
 function App() {
-  // Fetch current user on mount and sync to Redux store
+  
   useGetCurrentUser();
+  useGetSuggestedUsers();
 
   const { userData, loading } = useSelector((state) => state.user);
 
-  // Show full screen loading spinner while checking authentication state
+
   if (loading) {
     return (
       <div className="w-full h-screen bg-black flex flex-col items-center justify-center gap-4 text-white">
