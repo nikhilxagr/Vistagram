@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import useGetCurrentUser from "./hooks/useGetCurrentUser";
 import { ClipLoader } from "react-spinners";
 import useGetSuggestedUsers from "./hooks/getSuggestedUsers";
+import Profile from "./pages/Profile";
 
 export const serverUrl = "http://localhost:8000";
 
@@ -47,6 +48,7 @@ function App() {
         element={!userData ? <ForgotPassword /> : <Navigate to="/" />}
       />
       <Route path="*" element={<Navigate to="/" />} />
+      <Route path="/profile/:userName" element={userData ? <Profile /> : <Navigate to="/signin" />} />
     </Routes>
   );
 }

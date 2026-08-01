@@ -5,8 +5,12 @@ import { RxVideo } from "react-icons/rx";
 import { FiPlusSquare } from "react-icons/fi";
 import { useSelector } from "react-redux";
 import dp from "../assets/dp.png";
+import { useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { useDispatch } from "react-redux";
 
 function Nav() {
+  const navigate = useNavigate();
   const { userData } = useSelector((state) => state.user);
 
   return (
@@ -23,7 +27,8 @@ function Nav() {
       <div className="cursor-pointer hover:opacity-80 transition">
         <FiPlusSquare className="text-white w-[24px] h-[24px]" />
       </div>
-      <div className="w-[38px] h-[38px] border border-gray-700 rounded-full cursor-pointer overflow-hidden">
+      <div className="w-[38px] h-[38px] border border-gray-700 rounded-full cursor-pointer overflow-hidden" onClick={() => navigate(`/profile/${userData?.userName}`)}>
+
         <img
           src={userData?.profileImage || dp}
           alt="Profile Picture"
