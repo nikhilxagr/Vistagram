@@ -7,7 +7,6 @@ import Nav from "./Nav";
 function Feed() {
   return (
     <div className="lg:w-[50%] w-full bg-black min-h-screen relative lg:overflow-y-auto">
-      {/* Mobile Header */}
       <div className="w-full h-[70px] flex items-center justify-between px-6 lg:hidden border-b border-gray-900">
         <img src={logo} alt="Vistagram" className="w-[100px]" />
         <div>
@@ -15,7 +14,6 @@ function Feed() {
         </div>
       </div>
 
-      {/* Stories Carousel */}
       <div className="flex w-full justify-start overflow-x-auto gap-3 items-center p-4">
         <StoryDp username="Nikhil" />
         <StoryDp username="Sahil" />
@@ -27,7 +25,6 @@ function Feed() {
         <StoryDp username="Sohan" />
       </div>
 
-      {/* Main Feed Container */}
       <div className="w-full min-h-screen flex flex-col items-center gap-5 p-4 pt-8 bg-white rounded-t-[40px] relative pb-[120px]">
         <Nav />
       </div>

@@ -5,7 +5,6 @@ import RightHome from "../components/RightHome";
 import useGetSuggestedUsers from "../hooks/getSuggestedUsers";
 
 function Home() {
-  // Fetch suggested users on Home load
   useGetSuggestedUsers();
 
   return (

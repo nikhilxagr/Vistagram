@@ -47,9 +47,7 @@ function SignIn() {
   return (
     <div className="w-full min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center p-4 md:p-6">
       <div className="w-full max-w-5xl bg-white rounded-3xl overflow-hidden shadow-2xl border border-gray-800 flex flex-col lg:flex-row min-h-[600px]">
-        {/* Left Side: Form */}
         <div className="w-full lg:w-1/2 bg-white flex flex-col items-center justify-center px-8 md:px-12 py-10">
-          {/* Header & Logo */}
           <div className="mb-6 flex flex-col items-center text-center">
             <img
               src={logo2}
@@ -74,7 +72,6 @@ function SignIn() {
               </div>
             )}
 
-            {/* Username Input */}
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="userName"
@@ -92,7 +89,6 @@ function SignIn() {
               />
             </div>
 
-            {/* Password Input */}
             <div className="flex flex-col gap-1.5 relative">
               <div className="flex justify-between items-center">
                 <label
@@ -132,7 +128,6 @@ function SignIn() {
               </div>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               className="mt-2 h-12 w-full cursor-pointer rounded-xl bg-black px-4 font-semibold text-white transition-all hover:bg-gray-900 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70 flex items-center justify-center"
@@ -153,7 +148,6 @@ function SignIn() {
           </p>
         </div>
 
-        {/* Right Side: Hero Section */}
         <div className="hidden lg:flex lg:w-1/2 bg-black text-white flex-col items-center justify-center p-12 relative overflow-hidden border-l border-gray-800">
           <div className="absolute w-80 h-80 bg-gradient-to-tr from-purple-600/30 to-pink-600/30 rounded-full blur-3xl opacity-50 pointer-events-none" />
           <div className="relative z-10 flex flex-col items-center text-center">

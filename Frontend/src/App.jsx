@@ -5,20 +5,16 @@ import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
+import Profile from "./pages/Profile";
 import useGetCurrentUser from "./hooks/useGetCurrentUser";
 import { ClipLoader } from "react-spinners";
-import useGetSuggestedUsers from "./hooks/getSuggestedUsers";
-import Profile from "./pages/Profile";
 
 export const serverUrl = "http://localhost:8000";
 
 function App() {
-  
   useGetCurrentUser();
-  useGetSuggestedUsers();
 
   const { userData, loading } = useSelector((state) => state.user);
-
 
   if (loading) {
     return (
@@ -36,6 +32,10 @@ function App() {
         element={userData ? <Home /> : <Navigate to="/signin" />}
       />
       <Route
+        path="/profile/:userName"
+        element={userData ? <Profile /> : <Navigate to="/signin" />}
+      />
+      <Route
         path="/signup"
         element={!userData ? <SignUp /> : <Navigate to="/" />}
       />
@@ -48,7 +48,6 @@ function App() {
         element={!userData ? <ForgotPassword /> : <Navigate to="/" />}
       />
       <Route path="*" element={<Navigate to="/" />} />
-      <Route path="/profile/:userName" element={userData ? <Profile /> : <Navigate to="/signin" />} />
     </Routes>
   );
 }

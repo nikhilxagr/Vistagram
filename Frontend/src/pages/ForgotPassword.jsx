@@ -17,7 +17,6 @@ function ForgotPassword() {
 
   const navigate = useNavigate();
 
-  // Send OTP
   const handleSendOTP = async () => {
     setLoading(true);
     setMessage({ text: "", type: "" });
@@ -44,7 +43,6 @@ function ForgotPassword() {
     }
   };
 
-  // Verify OTP
   const handleVerifyOTP = async () => {
     setLoading(true);
     setMessage({ text: "", type: "" });
@@ -74,7 +72,6 @@ function ForgotPassword() {
     }
   };
 
-  // Reset Password
   const handleResetPassword = async () => {
     if (newPassword !== confirmPassword) {
       setMessage({ text: "Passwords do not match", type: "error" });
@@ -119,7 +116,6 @@ function ForgotPassword() {
 
   return (
     <div className="w-full h-screen bg-gradient-to-b from-black to-gray-900 flex justify-center items-center">
-      {/* STEP 1 */}
       {step === 1 && (
         <div className="w-[90%] max-w-lg bg-white rounded-2xl p-10">
           <h2 className="text-3xl font-bold text-center mb-8">
@@ -157,7 +153,6 @@ function ForgotPassword() {
         </div>
       )}
 
-      {/* STEP 2 */}
       {step === 2 && (
         <div className="w-[90%] max-w-lg bg-white rounded-2xl p-10">
           <h2 className="text-3xl font-bold text-center mb-2">Verify OTP</h2>
@@ -184,7 +179,6 @@ function ForgotPassword() {
             {loading ? <ClipLoader size={20} color="#fff" /> : "Verify OTP"}
           </button>
 
-          {/* Green/Red alert message below Verify OTP button */}
           {message.text && (
             <div
               className={`w-full mt-4 p-3 rounded-xl text-center text-sm font-semibold border ${
@@ -199,7 +193,6 @@ function ForgotPassword() {
         </div>
       )}
 
-      {/* STEP 3 */}
       {step === 3 && (
         <div className="w-[90%] max-w-lg bg-white rounded-2xl p-10">
           <h2 className="text-3xl font-bold text-center mb-8">
