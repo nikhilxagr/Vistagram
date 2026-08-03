@@ -1,5 +1,6 @@
 import User from "../models/user.model.js";
 import uploadOnCloudinary from "../config/cloudinary.js";
+import fs from "fs";
 
 export const getCurrentUser = async (req, res) => {
 
@@ -45,9 +46,27 @@ export const editProfile = async (req, res) => {
       return res.status(400).json({ message: "Username already exists" });
     }
 
-    let profileImage;
     if (req.file) {
-      profileImage = await uploadOnCloudinary(req.file.path);
+      try {
+        const uploadedUrl = await uploadOnCloudinary(req.file.path);
+        if (typeof uploadedUrl === "string") {
+          user.profileImage = uploadedUrl;
+        } else if (uploadedUrl?.secure_url) {
+          user.profileImage = uploadedUrl.secure_url;
+        }
+      } catch (uploadError) {
+        console.error("Cloudinary upload error, using local base64 fallback:", uploadError.message);
+        try {
+          const fileData = fs.readFileSync(req.file.path);
+          const mimeType = req.file.mimetype || "image/png";
+          user.profileImage = `data:${mimeType};base64,${fileData.toString("base64")}`;
+          if (fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+          }
+        } catch (fsErr) {
+          console.error("Local file fallback error:", fsErr);
+        }
+      }
     }
 
     user.name = name || user.name;
@@ -55,9 +74,6 @@ export const editProfile = async (req, res) => {
     user.bio = bio || user.bio;
     user.profession = profession || user.profession;
     user.gender = gender || user.gender;
-    if (profileImage) {
-      user.profileImage = profileImage.secure_url;
-    }
 
     await user.save();
     return res.status(200).json({ message: "Profile updated successfully", user });
@@ -71,13 +87,20 @@ export const editProfile = async (req, res) => {
 export const getProfile = async (req, res) => {
   try {
     const userName = req.params.userName;
-    const user = await User.findOne({ username: userName }).select("-password");
+    let user = await User.findOne({
+      username: { $regex: new RegExp(`^${userName}$`, "i") },
+    }).select("-password");
+
+    if (!user && userName.match(/^[0-9a-fA-F]{24}$/)) {
+      user = await User.findById(userName).select("-password");
+    }
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
     return res.status(200).json({ user });
   } catch (error) {
-    console.error(error);
+    console.error("Error in getProfile:", error);
     res.status(500).json({ message: "Failed to fetch profile" });
   }
 };

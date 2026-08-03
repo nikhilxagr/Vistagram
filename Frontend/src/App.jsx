@@ -6,6 +6,7 @@ import SignIn from "./pages/SignIn";
 import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
+import EditProfile from "./pages/EditProfile";
 import useGetCurrentUser from "./hooks/useGetCurrentUser";
 import { ClipLoader } from "react-spinners";
 
@@ -34,6 +35,10 @@ function App() {
       <Route
         path="/profile/:userName"
         element={userData ? <Profile /> : <Navigate to="/signin" />}
+      />
+      <Route
+        path="/edit-profile"
+        element={userData ? <EditProfile /> : <Navigate to="/signin" />}
       />
       <Route
         path="/signup"

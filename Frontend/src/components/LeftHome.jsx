@@ -46,7 +46,12 @@ function LeftHome() {
   return (
     <div className="w-[25%] hidden lg:block min-h-screen bg-black border-r border-gray-900 p-5">
       <div className="w-full flex items-center justify-between py-2 mb-6">
-        <img src={logo} alt="Vistagram" className="w-[120px] object-contain" />
+        <img
+          src={logo}
+          alt="Vistagram"
+          className="w-[120px] object-contain cursor-pointer hover:opacity-80 transition"
+          onClick={() => navigate("/")}
+        />
         <FaRegHeart className="text-white w-5 h-5 cursor-pointer hover:text-red-500 transition" />
       </div>
 
