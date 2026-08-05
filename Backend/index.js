@@ -5,6 +5,9 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
+import postRouter from "./routes/post.routes.js";
+import reelRouter from "./routes/reel.routes.js";
+import storyRouter from "./routes/story.routes.js";
 
 dotenv.config();
 const app = express();
@@ -31,6 +34,9 @@ app.use(cors({
 
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
+app.use("/api/posts", postRouter);
+app.use("/api/reels", reelRouter);
+app.use("/api/stories", storyRouter);
 
 
 app.listen(PORT, () => {

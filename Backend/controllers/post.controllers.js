@@ -31,7 +31,7 @@ try {
 
 export const getAllPosts = async (req, res)=>{
     try {
-        const posts = await Post.find({author:req.userId}).populate("author", "name username profileImage").sort({createdAt: -1})
+        const posts = await Post.find({}).populate("author", "name username profileImage").sort({createdAt: -1})
         return res.status(200).json(posts)
     } catch (error) {
         return res.status(500).json({message: "Error fetching all posts", error})

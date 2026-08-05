@@ -24,8 +24,14 @@ const reelsSchema = new mongoose.Schema(
                ],
                comments: [
                    {
-                       type: mongoose.Schema.Types.ObjectId,
-                       ref: "Comment"
+                       author: {
+                           type: mongoose.Schema.Types.ObjectId,
+                           ref: "User",
+                       },
+                       message: {
+                           type: String,
+                           required: true
+                       }
                    }
                ]
            },
