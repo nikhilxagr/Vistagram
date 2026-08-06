@@ -9,19 +9,18 @@ const useGetCurrentUser = () => {
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
-      dispatch(setLoading(true));
       try {
         const response = await axios.get(`${serverUrl}/api/users/current`, {
           withCredentials: true,
         });
         if (response.data?.user) {
           dispatch(setUserData(response.data.user));
-        } else {
-          dispatch(setUserData(null));
         }
       } catch (error) {
-        console.log('No active session or error fetching current user');
-        dispatch(setUserData(null));
+        console.log('Error fetching current user:', error.message);
+        if (error.response?.status === 401) {
+          dispatch(setUserData(null));
+        }
       } finally {
         dispatch(setLoading(false));
       }

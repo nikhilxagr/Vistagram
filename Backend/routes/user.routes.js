@@ -3,7 +3,8 @@ import {
   getCurrentUser,
   editProfile,
   suggestedUsers,
-  getProfile
+  getProfile,
+  followUser
 } from "../controllers/user.controllers.js";
 import isAuth from "../middleware/isAuth.js";
 import upload from "../middleware/multer.js";
@@ -14,5 +15,6 @@ userRouter.get("/current", isAuth,getCurrentUser);
 userRouter.get("/suggested", isAuth, suggestedUsers);
 userRouter.get("/getProfile/:userName", isAuth, getProfile);
 userRouter.put("/editProfile", isAuth, upload.single("profileImage"), editProfile);
+userRouter.put("/follow/:userId", isAuth, followUser);
 
 export default userRouter;

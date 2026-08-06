@@ -7,6 +7,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
+import Upload from "./pages/Upload";
 import useGetCurrentUser from "./hooks/useGetCurrentUser";
 import { ClipLoader } from "react-spinners";
 
@@ -49,9 +50,14 @@ function App() {
         element={!userData ? <SignIn /> : <Navigate to="/" />}
       />
       <Route
+        path="/upload"
+        element={userData ? <Upload /> : <Navigate to="/signin" />}
+      />
+      <Route
         path="/forgot-password"
         element={!userData ? <ForgotPassword /> : <Navigate to="/" />}
       />
+     
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );

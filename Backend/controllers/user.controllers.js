@@ -5,8 +5,17 @@ import fs from "fs";
 export const getCurrentUser = async (req, res) => {
 
   try {
-    const userId = req.userId;
-    const user = await User.findById(userId).select("-password").populate("followers", "name username profileImage").populate("following", "name username profileImage").populate("posts").populate("savedPosts").populate("reels").populate("savedReels");
+    const userId = req.userId || req.user?._id;
+    const user = await User.findById(userId)
+      .select("-password")
+      .populate("followers", "name username profileImage")
+      .populate("following", "name username profileImage")
+      .populate("posts")
+      .populate({
+        path: "savedPosts",
+        populate: { path: "author", select: "name username profileImage" },
+      })
+      .populate("reels");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -71,28 +80,49 @@ export const editProfile = async (req, res) => {
 
     user.name = name || user.name;
     user.username = username || user.username;
-    user.bio = bio || user.bio;
-    user.profession = profession || user.profession;
-    user.gender = gender || user.gender;
+    user.bio = bio !== undefined ? bio : user.bio;
+    user.profession = profession !== undefined ? profession : user.profession;
+
+    if (gender) {
+      if (["Male", "Female", "Other"].includes(gender)) {
+        user.gender = gender;
+      } else {
+        user.gender = "Other";
+      }
+    }
 
     await user.save();
     return res.status(200).json({ message: "Profile updated successfully", user });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Failed to edit profile" });
+    console.error("Error in editProfile controller:", error);
+    res.status(500).json({ message: error.message || "Failed to edit profile" });
   }
-}
+};
 
 export const getProfile = async (req, res) => {
   try {
     const userName = req.params.userName;
     let user = await User.findOne({
       username: { $regex: new RegExp(`^${userName}$`, "i") },
-    }).select("-password");
+    })
+      .select("-password")
+      .populate("posts")
+      .populate({
+        path: "savedPosts",
+        populate: { path: "author", select: "name username profileImage" },
+      })
+      .populate("reels");
 
     if (!user && userName.match(/^[0-9a-fA-F]{24}$/)) {
-      user = await User.findById(userName).select("-password");
+      user = await User.findById(userName)
+        .select("-password")
+        .populate("posts")
+        .populate({
+          path: "savedPosts",
+          populate: { path: "author", select: "name username profileImage" },
+        })
+        .populate("reels");
     }
 
     if (!user) {
@@ -102,5 +132,54 @@ export const getProfile = async (req, res) => {
   } catch (error) {
     console.error("Error in getProfile:", error);
     res.status(500).json({ message: "Failed to fetch profile" });
+  }
+};
+
+export const followUser = async (req, res) => {
+  try {
+    const currentUserId = req.userId;
+    const targetUserId = req.params.userId;
+
+    if (currentUserId === targetUserId) {
+      return res.status(400).json({ message: "You cannot follow yourself" });
+    }
+
+    const currentUser = await User.findById(currentUserId);
+    const targetUser = await User.findById(targetUserId);
+
+    if (!currentUser || !targetUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const alreadyFollowing = currentUser.following.some(
+      (id) => id.toString() === targetUserId
+    );
+
+    if (alreadyFollowing) {
+      currentUser.following = currentUser.following.filter(
+        (id) => id.toString() !== targetUserId
+      );
+      targetUser.followers = targetUser.followers.filter(
+        (id) => id.toString() !== currentUserId
+      );
+      await Promise.all([currentUser.save(), targetUser.save()]);
+      return res.status(200).json({
+        message: "Unfollowed successfully",
+        isFollowing: false,
+        followersCount: targetUser.followers.length,
+      });
+    } else {
+      currentUser.following.push(targetUserId);
+      targetUser.followers.push(currentUserId);
+      await Promise.all([currentUser.save(), targetUser.save()]);
+      return res.status(200).json({
+        message: "Followed successfully",
+        isFollowing: true,
+        followersCount: targetUser.followers.length,
+      });
+    }
+  } catch (error) {
+    console.error("Error in followUser:", error);
+    res.status(500).json({ message: "Failed to follow/unfollow user" });
   }
 };

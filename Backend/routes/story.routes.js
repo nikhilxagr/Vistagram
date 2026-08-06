@@ -1,12 +1,11 @@
 import express from "express";
-import isAuth from "../middlewares/isAuth.js";
-import { uplaodStory, likePost, comments, saved } from "../controllers/post.controllers.js";
-
-import { upload } from "../middlewares/multer.js";
+import isAuth from "../middleware/isAuth.js";
+import upload from "../middleware/multer.js";
+import { uploadStory, getStoryByUserName, viewStory } from "../controllers/story.controllers.js";
 
 const storyRouter = express.Router();
 
-storyRouter.post("/upload", isAuth, getCurrentUser, upload.single("media"), uplaodStory);
+storyRouter.post("/upload", isAuth, upload.single("media"), uploadStory);
 storyRouter.get("/getbyusername/:username", isAuth, getStoryByUserName);
 storyRouter.put("/:storyId/view", isAuth, viewStory);
 

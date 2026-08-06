@@ -38,7 +38,8 @@ export const signup = async (req, res) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: false, // Set to true if using HTTPS
-      sameSite: "strict",
+      sameSite: "lax",
+      path: "/",
       maxAge: 10 * 365 * 24 * 60 * 60 * 1000, // 10 years
     });
     res.status(201).json({ message: "User created successfully", user });
@@ -70,7 +71,8 @@ export const signin = async (req, res) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: false, // Set to true if using HTTPS
-      sameSite: "strict",
+      sameSite: "lax",
+      path: "/",
       maxAge: 10 * 365 * 24 * 60 * 60 * 1000, // 10 years
     });
     res.status(200).json({ message: "Signin successful", user });
@@ -85,7 +87,8 @@ export const signOut = async (req, res) => {
     res.clearCookie("token", {
       httpOnly: true,
       secure: false,
-      sameSite: "strict",
+      sameSite: "lax",
+      path: "/",
     });
     res.status(200).json({ message: "Signout successful" });
   } catch (error) {

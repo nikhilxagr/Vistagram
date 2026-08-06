@@ -18,7 +18,7 @@ function EditProfile() {
   const [username, setUsername] = useState(userData?.username || userData?.userName || "");
   const [bio, setBio] = useState(userData?.bio || "");
   const [profession, setProfession] = useState(userData?.profession || "");
-  const [gender, setGender] = useState(userData?.gender || "Prefer not to say");
+  const [gender, setGender] = useState(userData?.gender || "Male");
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewImage, setPreviewImage] = useState(userData?.profileImage || dp);
@@ -228,8 +228,7 @@ function EditProfile() {
             >
               <option value="Male">Male</option>
               <option value="Female">Female</option>
-              <option value="Custom">Custom</option>
-              <option value="Prefer not to say">Prefer not to say</option>
+              <option value="Other">Other</option>
             </select>
           </div>
 

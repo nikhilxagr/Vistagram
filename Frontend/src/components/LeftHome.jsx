@@ -8,8 +8,10 @@ import axios from "axios";
 import { serverUrl } from "../App";
 import { useNavigate } from "react-router-dom";
 import OtherUser from "./OtherUser";
+import useGetSuggestedUsers from "../hooks/getSuggestedUsers";
 
 function LeftHome() {
+  useGetSuggestedUsers();
   const { userData, suggestedUsers } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -29,19 +31,7 @@ function LeftHome() {
     }
   };
 
-  const sampleUsers = [
-    { _id: "s1", username: "ankush123", name: "Ankush", profileImage: "" },
-    { _id: "s2", username: "theadityasahu__", name: "aditya sahu", profileImage: "" },
-    { _id: "s3", username: "sahil_kumar", name: "Sahil Kumar", profileImage: "" },
-    { _id: "s4", username: "gaurav_dev", name: "Gaurav Singh", profileImage: "" },
-  ];
-
-  const displayUsers =
-    Array.isArray(suggestedUsers) && suggestedUsers.length >= 3
-      ? suggestedUsers
-      : Array.isArray(suggestedUsers) && suggestedUsers.length > 0
-      ? [...suggestedUsers, ...sampleUsers.slice(0, 4 - suggestedUsers.length)]
-      : sampleUsers;
+  const displayUsers = Array.isArray(suggestedUsers) ? suggestedUsers : [];
 
   return (
     <div className="w-[25%] hidden lg:block min-h-screen bg-black border-r border-gray-900 p-5">
@@ -57,15 +47,15 @@ function LeftHome() {
 
       <div className="w-full flex items-center justify-between p-3 rounded-2xl bg-gray-900/40 border border-gray-800/80 mb-8">
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-700 flex-shrink-0">
+          <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-700 flex-shrink-0 cursor-pointer" onClick={() => navigate(`/profile/${userData?.username}`)}>
             <img
               src={userData?.profileImage || dp}
               alt="Profile Picture"
               className="w-full h-full object-cover"
             />
           </div>
-          <div className="overflow-hidden">
-            <div className="text-sm font-bold text-white truncate">
+          <div className="overflow-hidden cursor-pointer" onClick={() => navigate(`/profile/${userData?.username}`)}>
+            <div className="text-sm font-bold text-white truncate hover:underline">
               {userData?.username || userData?.userName || "User"}
             </div>
             <div className="text-xs text-gray-400 truncate">
@@ -85,9 +75,13 @@ function LeftHome() {
       <div className="w-full flex flex-col gap-3">
         <h2 className="text-white text-sm font-bold px-1 mb-1">Suggested Users</h2>
         <div className="flex flex-col gap-2">
-          {displayUsers.slice(0, 4).map((user, index) => (
-            <OtherUser key={user._id || index} user={user} />
-          ))}
+          {displayUsers.length > 0 ? (
+            displayUsers.map((user, index) => (
+              <OtherUser key={user._id || index} user={user} />
+            ))
+          ) : (
+            <p className="text-xs text-gray-500 px-1 font-medium">No suggestions right now</p>
+          )}
         </div>
       </div>
     </div>

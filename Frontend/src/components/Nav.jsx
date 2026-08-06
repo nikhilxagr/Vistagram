@@ -21,13 +21,13 @@ function Nav() {
       >
         <GoHomeFill className="text-white w-[24px] h-[24px]" />
       </div>
-      <div className="cursor-pointer hover:opacity-80 transition">
+      <div className="cursor-pointer hover:opacity-80 transition" onClick={() => navigate("/search")}>
         <FiSearch className="text-white w-[24px] h-[24px]" />
       </div>
-      <div className="cursor-pointer hover:opacity-80 transition">
+      <div className="cursor-pointer hover:opacity-80 transition" onClick={() => navigate("/upload")}>
         <RxVideo className="text-white w-[24px] h-[24px]" />
       </div>
-      <div className="cursor-pointer hover:opacity-80 transition">
+      <div className="cursor-pointer hover:opacity-80 transition" onClick={() => navigate("/upload")}>
         <FiPlusSquare className="text-white w-[24px] h-[24px]" />
       </div>
       <div

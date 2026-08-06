@@ -12,8 +12,8 @@ const isAuth = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error("isAuth error:", error.message);
+    return res.status(401).json({ message: 'Invalid or expired token' });
   }
 };
 
