@@ -31,6 +31,16 @@ function Upload() {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (activeTab === "Reel" && !file.type.startsWith("video")) {
+        setMessage({
+          text: "Reels can only be video files! Please select a video.",
+          type: "error",
+        });
+        setSelectedFile(null);
+        setPreviewUrl(null);
+        return;
+      }
+
       setSelectedFile(file);
       setPreviewUrl(URL.createObjectURL(file));
       if (file.type.startsWith("video")) {
@@ -50,6 +60,14 @@ function Upload() {
     e.preventDefault();
     if (!selectedFile) {
       setMessage({ text: "Please select a media file to upload", type: "error" });
+      return;
+    }
+
+    if (activeTab === "Reel" && mediaType !== "video") {
+      setMessage({
+        text: "Reels can only be video files! Please select a video.",
+        type: "error",
+      });
       return;
     }
 
@@ -94,7 +112,11 @@ function Upload() {
       });
 
       setTimeout(() => {
-        navigate("/");
+        if (activeTab === "Reel") {
+          navigate("/reels");
+        } else {
+          navigate("/");
+        }
       }, 1200);
     } catch (err) {
       console.error("Upload error:", err);
@@ -145,6 +167,7 @@ function Upload() {
               key={tab}
               onClick={() => {
                 setActiveTab(tab);
+                handleClearFile();
                 setMessage({ text: "", type: "" });
               }}
               className={`flex-1 text-center font-bold text-sm py-2.5 rounded-full transition-all duration-300 cursor-pointer ${
@@ -177,7 +200,7 @@ function Upload() {
           >
             <FiPlusSquare className="text-white text-3xl mb-3 group-hover:scale-110 transition-transform" />
             <span className="text-sm font-semibold text-gray-200">
-              Upload {activeTab.toLowerCase()}
+              Upload {activeTab.toLowerCase()} {activeTab === "Reel" && "(Video Only)"}
             </span>
             <input
               type="file"

@@ -1,9 +1,11 @@
 import User from "../models/user.model.js";
+import Post from "../models/post.model.js";
+import Reel from "../models/reel.model.js";
+import Story from "../models/story.model.js";
 import uploadOnCloudinary from "../config/cloudinary.js";
 import fs from "fs";
 
 export const getCurrentUser = async (req, res) => {
-
   try {
     const userId = req.userId || req.user?._id;
     const user = await User.findById(userId)
@@ -20,9 +22,8 @@ export const getCurrentUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
     return res.status(200).json({ user });
-
   } catch (error) {
-    console.error(error);
+    console.error("Error in getCurrentUser:", error);
     res.status(500).json({ message: "Current user not found" });
   }
 };
@@ -30,29 +31,29 @@ export const getCurrentUser = async (req, res) => {
 export const suggestedUsers = async (req, res) => {
   try {
     const users = await User.find({
-      _id: {$ne: req.userId}})
-      .select("-password");
+      _id: { $ne: req.userId },
+    }).select("-password");
 
     return res.status(200).json({ users });
-
   } catch (error) {
-    console.error(error);
+    console.error("Error in suggestedUsers:", error);
     res.status(500).json({ message: "Failed to fetch suggested users" });
   }
-} 
-
+};
 
 export const editProfile = async (req, res) => {
   try {
-    const { name, username , bio, profession, gender } = req.body;
+    const { name, username, bio, profession, gender } = req.body;
     const user = await User.findById(req.userId).select("-password");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const sameUserWithUsername = await User.findOne({ username }).select("-password");
-    if (sameUserWithUsername && sameUserWithUsername._id.toString() !== req.userId) {
-      return res.status(400).json({ message: "Username already exists" });
+    if (username) {
+      const sameUserWithUsername = await User.findOne({ username }).select("-password");
+      if (sameUserWithUsername && sameUserWithUsername._id.toString() !== req.userId) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
     }
 
     if (req.file) {
@@ -93,7 +94,6 @@ export const editProfile = async (req, res) => {
 
     await user.save();
     return res.status(200).json({ message: "Profile updated successfully", user });
-
   } catch (error) {
     console.error("Error in editProfile controller:", error);
     res.status(500).json({ message: error.message || "Failed to edit profile" });
@@ -103,20 +103,37 @@ export const editProfile = async (req, res) => {
 export const getProfile = async (req, res) => {
   try {
     const userName = req.params.userName;
-    let user = await User.findOne({
-      username: { $regex: new RegExp(`^${userName}$`, "i") },
-    })
-      .select("-password")
-      .populate("posts")
-      .populate({
-        path: "savedPosts",
-        populate: { path: "author", select: "name username profileImage" },
-      })
-      .populate("reels");
+    if (!userName) {
+      return res.status(400).json({ message: "Username is required" });
+    }
 
-    if (!user && userName.match(/^[0-9a-fA-F]{24}$/)) {
+    let user = null;
+
+    if (userName.match(/^[0-9a-fA-F]{24}$/)) {
       user = await User.findById(userName)
         .select("-password")
+        .populate("followers", "name username profileImage")
+        .populate("following", "name username profileImage")
+        .populate("posts")
+        .populate({
+          path: "savedPosts",
+          populate: { path: "author", select: "name username profileImage" },
+        })
+        .populate("reels");
+    }
+
+    if (!user) {
+      const escaped = userName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      user = await User.findOne({
+        $or: [
+          { username: { $regex: new RegExp(`^${escaped}$`, "i") } },
+          { name: { $regex: new RegExp(`^${escaped}$`, "i") } },
+          { email: { $regex: new RegExp(`^${escaped}$`, "i") } },
+        ],
+      })
+        .select("-password")
+        .populate("followers", "name username profileImage")
+        .populate("following", "name username profileImage")
         .populate("posts")
         .populate({
           path: "savedPosts",
@@ -131,7 +148,7 @@ export const getProfile = async (req, res) => {
     return res.status(200).json({ user });
   } catch (error) {
     console.error("Error in getProfile:", error);
-    res.status(500).json({ message: "Failed to fetch profile" });
+    res.status(500).json({ message: "Failed to fetch profile", error: error.message });
   }
 };
 
@@ -167,6 +184,7 @@ export const followUser = async (req, res) => {
         message: "Unfollowed successfully",
         isFollowing: false,
         followersCount: targetUser.followers.length,
+        followers: targetUser.followers,
       });
     } else {
       currentUser.following.push(targetUserId);
@@ -176,6 +194,7 @@ export const followUser = async (req, res) => {
         message: "Followed successfully",
         isFollowing: true,
         followersCount: targetUser.followers.length,
+        followers: targetUser.followers,
       });
     }
   } catch (error) {
