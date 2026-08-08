@@ -12,12 +12,18 @@ export const getCurrentUser = async (req, res) => {
       .select("-password")
       .populate("followers", "name username profileImage")
       .populate("following", "name username profileImage")
-      .populate("posts")
+      .populate({
+        path: "posts",
+        populate: { path: "author", select: "name username profileImage" },
+      })
       .populate({
         path: "savedPosts",
         populate: { path: "author", select: "name username profileImage" },
       })
-      .populate("reels");
+      .populate({
+        path: "reels",
+        populate: { path: "author", select: "name username profileImage" },
+      });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -109,17 +115,27 @@ export const getProfile = async (req, res) => {
 
     let user = null;
 
+    const populateConfig = [
+      { path: "followers", select: "name username profileImage" },
+      { path: "following", select: "name username profileImage" },
+      {
+        path: "posts",
+        populate: { path: "author", select: "name username profileImage" },
+      },
+      {
+        path: "savedPosts",
+        populate: { path: "author", select: "name username profileImage" },
+      },
+      {
+        path: "reels",
+        populate: { path: "author", select: "name username profileImage" },
+      },
+    ];
+
     if (userName.match(/^[0-9a-fA-F]{24}$/)) {
       user = await User.findById(userName)
         .select("-password")
-        .populate("followers", "name username profileImage")
-        .populate("following", "name username profileImage")
-        .populate("posts")
-        .populate({
-          path: "savedPosts",
-          populate: { path: "author", select: "name username profileImage" },
-        })
-        .populate("reels");
+        .populate(populateConfig);
     }
 
     if (!user) {
@@ -132,14 +148,7 @@ export const getProfile = async (req, res) => {
         ],
       })
         .select("-password")
-        .populate("followers", "name username profileImage")
-        .populate("following", "name username profileImage")
-        .populate("posts")
-        .populate({
-          path: "savedPosts",
-          populate: { path: "author", select: "name username profileImage" },
-        })
-        .populate("reels");
+        .populate(populateConfig);
     }
 
     if (!user) {

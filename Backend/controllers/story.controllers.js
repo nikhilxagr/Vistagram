@@ -31,12 +31,16 @@ export const uploadStory = async (req, res) => {
       return res.status(400).json({ message: "Media file is required" });
     }
 
+    const isVideo = req.file.mimetype?.startsWith("video/") || mediaType === "video";
+
     const story = await Story.create({
       media: mediaUrl,
-      mediaType: mediaType || "image",
+      mediaType: isVideo ? "video" : "image",
       author: userId,
     });
 
+    user.story = user.story || [];
+    user.story.push(story._id);
     user.stories = user.stories || [];
     user.stories.push(story._id);
     await user.save();
@@ -95,5 +99,17 @@ export const getStoryByUserName = async (req, res) => {
     return res.status(200).json(populatedStory);
   } catch (error) {
     return res.status(500).json({ message: "Error fetching story", error: error.message });
+  }
+};
+
+export const getAllStories = async (req, res) => {
+  try {
+    const stories = await Story.find()
+      .populate("author", "name username profileImage")
+      .populate("viewers", "name username profileImage")
+      .sort({ createdAt: -1 });
+    return res.status(200).json(stories);
+  } catch (error) {
+    return res.status(500).json({ message: "Error fetching stories", error: error.message });
   }
 };

@@ -98,9 +98,15 @@ export const comments = async (req, res) => {
     });
     await reel.save();
 
+    const updatedReel = await Post.findById(reelId).populate({
+      path: "comments.author",
+      select: "name username profileImage",
+    });
+
     return res.status(200).json({
       message: "Comment added successfully",
-      commentsCount: reel.comments.length,
+      commentsCount: updatedReel.comments.length,
+      comments: updatedReel.comments,
     });
   } catch (error) {
     return res.status(500).json({ message: "Error adding comment", error: error.message });
@@ -111,6 +117,10 @@ export const getAllReels = async (req, res) => {
   try {
     const reels = await Post.find({ mediaType: "video" })
       .populate("author", "name username profileImage")
+      .populate({
+        path: "comments.author",
+        select: "name username profileImage",
+      })
       .sort({ createdAt: -1 });
     return res.status(200).json(reels);
   } catch (error) {

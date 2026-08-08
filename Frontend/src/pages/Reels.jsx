@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { ClipLoader } from "react-spinners";
 import { FiVideo, FiPlusSquare, FiArrowLeft } from "react-icons/fi";
 import ReelCard from "../components/ReelCard";
-import Nav from "../components/Nav";
 import useGetAllReels from "../hooks/getAllReels";
 
 function Reels() {
@@ -53,9 +52,6 @@ function Reels() {
           </button>
         </div>
       )}
-
-      {/* Floating Navigation Bar */}
-      <Nav />
     </div>
   );
 }

@@ -446,15 +446,31 @@ function Profile() {
       )}
 
       {selectedMedia && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div
+          onClick={() => setSelectedMedia(null)}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-md max-h-[90vh] overflow-y-auto cursor-default"
+          >
             <button
               onClick={() => setSelectedMedia(null)}
               className="absolute -top-10 right-0 text-white hover:text-gray-300 transition cursor-pointer p-1"
             >
               <FiX size={24} />
             </button>
-            <Post post={selectedMedia} />
+            <Post
+              post={{
+                ...selectedMedia,
+                author:
+                  typeof selectedMedia?.author === "object" &&
+                  selectedMedia?.author !== null &&
+                  (selectedMedia?.author?.username || selectedMedia?.author?.name)
+                    ? selectedMedia.author
+                    : displayUser,
+              }}
+            />
           </div>
         </div>
       )}
