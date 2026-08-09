@@ -37,7 +37,7 @@ app.use("/api/users", userRouter);
 app.use("/api/posts", postRouter);
 app.use("/api/reels", reelRouter);
 app.use("/api/stories", storyRouter);
-
+app.use("/api/story", storyRouter);
 
 app.listen(PORT, () => {
   connectDB();

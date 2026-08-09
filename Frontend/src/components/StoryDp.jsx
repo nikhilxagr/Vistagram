@@ -2,21 +2,30 @@ import React from "react";
 import dp from "../assets/dp.png";
 import { FiPlus } from "react-icons/fi";
 
-function StoryDp({ ProfileImage, username, story, hasStory = false, isYourStory = false, onClick, onPlusClick, loading = false }) {
+function StoryDp({
+  ProfileImage,
+  username,
+  story,
+  hasStory = false,
+  isSeen = false,
+  isYourStory = false,
+  onClick,
+  onPlusClick,
+  loading = false,
+}) {
+  const ringStyle = !hasStory
+    ? "p-[2px] bg-gray-800 border border-gray-700/60"
+    : isSeen
+    ? "p-[2.5px] bg-gray-600/80 border border-gray-500/80 group-hover:scale-105"
+    : "p-[2.5px] bg-gradient-to-tr from-yellow-500 via-rose-500 to-purple-600 shadow-md group-hover:scale-105";
+
   return (
     <div
       onClick={onClick}
       className="flex flex-col items-center gap-1.5 cursor-pointer w-[72px] flex-shrink-0 select-none group"
     >
       <div className="relative">
-        {/* Conditional Gradient Circular Ring */}
-        <div
-          className={`rounded-full transition-all duration-300 ${
-            hasStory
-              ? "p-[2.5px] bg-gradient-to-tr from-yellow-500 via-rose-500 to-purple-600 shadow-md group-hover:scale-105"
-              : "p-[2px] bg-gray-800 border border-gray-700/60"
-          }`}
-        >
+        <div className={`rounded-full transition-all duration-300 ${ringStyle}`}>
           <div className="w-[60px] h-[60px] border-2 border-black rounded-full overflow-hidden bg-gray-900 flex items-center justify-center">
             <img
               src={ProfileImage || dp}
@@ -27,7 +36,7 @@ function StoryDp({ ProfileImage, username, story, hasStory = false, isYourStory 
         </div>
 
         {/* Plus (+) Icon Badge for Your Story */}
-        {isYourStory && (
+        {isYourStory && !hasStory && (
           <button
             type="button"
             onClick={(e) => {
@@ -43,7 +52,7 @@ function StoryDp({ ProfileImage, username, story, hasStory = false, isYourStory 
         )}
       </div>
 
-      <p className="text-[11px] text-center truncate w-full text-gray-200 font-medium">
+      <p className={`text-[11px] text-center truncate w-full font-medium ${isSeen ? "text-gray-500" : "text-gray-200"}`}>
         {isYourStory ? "Your story" : username}
       </p>
     </div>

@@ -66,11 +66,21 @@ export const viewStory = async (req, res) => {
       return res.status(404).json({ message: "Story not found" });
     }
 
-    const viewersIds = story.viewers?.map((id) => id.toString()) || [];
-    if (!viewersIds.includes(userId.toString())) {
-      story.viewers = story.viewers || [];
-      story.viewers.push(userId);
+    const authorId = (story.author?._id || story.author || "").toString();
+
+    // If author is viewing their own story, ensure author ID is NOT in viewers
+    if (authorId === userId.toString()) {
+      story.viewers = story.viewers?.filter(
+        (id) => (id._id || id).toString() !== userId.toString()
+      ) || [];
       await story.save();
+    } else {
+      const viewersIds = story.viewers?.map((id) => (id._id || id).toString()) || [];
+      if (!viewersIds.includes(userId.toString())) {
+        story.viewers = story.viewers || [];
+        story.viewers.push(userId);
+        await story.save();
+      }
     }
 
     const populatedStory = await Story.findById(storyId)
@@ -102,14 +112,72 @@ export const getStoryByUserName = async (req, res) => {
   }
 };
 
+export const deleteStory = async (req, res) => {
+  try {
+    const storyId = req.params.storyId;
+    const userId = req.userId || req.user?._id;
+
+    const story = await Story.findById(storyId);
+    if (!story) {
+      return res.status(404).json({ message: "Story not found" });
+    }
+
+    const storyAuthorId = (story.author?._id || story.author || "").toString();
+
+    if (storyAuthorId !== userId.toString()) {
+      return res.status(403).json({ message: "Unauthorized to delete this story" });
+    }
+
+    await Story.findByIdAndDelete(storyId);
+
+    await User.findByIdAndUpdate(userId, {
+      $pull: { story: storyId, stories: storyId },
+    });
+
+    return res.status(200).json({ message: "Story deleted successfully", storyId });
+  } catch (error) {
+    console.error("Error in deleteStory:", error);
+    return res.status(500).json({ message: "Error deleting story", error: error.message });
+  }
+};
+
 export const getAllStories = async (req, res) => {
   try {
-    const stories = await Story.find()
+    const userId = req.userId || req.user?._id;
+    let allowedUserIds = [];
+
+    if (userId) {
+      const currentUser = await User.findById(userId);
+      const followingIds = currentUser?.following?.map((id) => id.toString()) || [];
+      const followerIds = currentUser?.followers?.map((id) => id.toString()) || [];
+
+      allowedUserIds = Array.from(
+        new Set([...followingIds, ...followerIds, userId.toString()])
+      ).filter(Boolean);
+    }
+
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    let query = { createdAt: { $gte: twentyFourHoursAgo } };
+    if (allowedUserIds.length > 0) {
+      query.author = { $in: allowedUserIds };
+    }
+
+    let stories = await Story.find(query)
       .populate("author", "name username profileImage")
       .populate("viewers", "name username profileImage")
       .sort({ createdAt: -1 });
+
+    if (!stories || stories.length === 0) {
+      stories = await Story.find({ createdAt: { $gte: twentyFourHoursAgo } })
+        .populate("author", "name username profileImage")
+        .populate("viewers", "name username profileImage")
+        .sort({ createdAt: -1 });
+    }
+
     return res.status(200).json(stories);
   } catch (error) {
+    console.error("Error in getAllStories:", error);
     return res.status(500).json({ message: "Error fetching stories", error: error.message });
   }
 };

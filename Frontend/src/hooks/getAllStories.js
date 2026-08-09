@@ -10,9 +10,16 @@ const useGetAllStories = () => {
   const fetchStories = async () => {
     dispatch(setStoryLoading(true));
     try {
-      const response = await axios.get(`${serverUrl}/api/story/all`, {
-        withCredentials: true,
-      });
+      let response;
+      try {
+        response = await axios.get(`${serverUrl}/api/story/all`, {
+          withCredentials: true,
+        });
+      } catch (err) {
+        response = await axios.get(`${serverUrl}/api/stories/all`, {
+          withCredentials: true,
+        });
+      }
       if (response.data) {
         dispatch(setStories(response.data));
       }
