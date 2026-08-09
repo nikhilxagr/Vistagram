@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { FiArrowLeft, FiPlusSquare } from "react-icons/fi";
+import { FiArrowLeft, FiPlusSquare, FiImage, FiFilm, FiClock } from "react-icons/fi";
 import { ClipLoader } from "react-spinners";
 import axios from "axios";
 import { serverUrl } from "../App.jsx";
@@ -13,6 +13,7 @@ import { addStory, setStoryLoading, setStoryError } from "../redux/story.slice";
 
 function Upload() {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
 
   const { userData } = useSelector((state) => state.user);
@@ -20,7 +21,8 @@ function Upload() {
   const { reels, loading: reelLoading } = useSelector((state) => state.reel);
   const { stories, loading: storyLoading } = useSelector((state) => state.story);
 
-  const [activeTab, setActiveTab] = useState("Post");
+  const initialTab = location.state?.tab || "Post";
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [mediaType, setMediaType] = useState("image");
@@ -29,7 +31,7 @@ function Upload() {
   const [message, setMessage] = useState({ text: "", type: "" });
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (file) {
       if (activeTab === "Reel" && !file.type.startsWith("video")) {
         setMessage({
@@ -86,7 +88,7 @@ function Upload() {
 
       let endpoint = `${serverUrl}/api/posts/upload`;
       if (activeTab === "Story") {
-        endpoint = `${serverUrl}/api/stories/upload`;
+        endpoint = `${serverUrl}/api/story/upload`;
       } else if (activeTab === "Reel") {
         endpoint = `${serverUrl}/api/reels/upload`;
       }
@@ -114,6 +116,8 @@ function Upload() {
       setTimeout(() => {
         if (activeTab === "Reel") {
           navigate("/reels");
+        } else if (activeTab === "Story") {
+          navigate("/story");
         } else {
           navigate("/");
         }
@@ -136,8 +140,9 @@ function Upload() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-black text-white flex flex-col items-center relative pb-28">
-      <header className="w-full max-w-2xl flex items-center justify-between px-6 py-4 border-b border-gray-900 sticky top-0 bg-black/90 backdrop-blur-md z-50">
+    <div className="w-full min-h-screen bg-black text-white flex flex-col items-center relative pb-28 select-none">
+      {/* Sticky Header */}
+      <header className="w-full max-w-2xl flex items-center justify-between px-6 py-4 border-b border-gray-900 sticky top-0 bg-black/95 backdrop-blur-md z-50">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
@@ -147,39 +152,56 @@ function Upload() {
             <FiArrowLeft />
           </button>
           <h1 className="text-base md:text-lg font-bold text-white tracking-wide">
-            Upload Media
+            Create New
           </h1>
         </div>
 
-        <div className="flex items-center gap-2 text-[10px] text-gray-500 font-mono">
-          <span>{posts?.length || 0} posts</span>
+        <div className="flex items-center gap-2 text-[11px] text-gray-400 font-medium">
+          <span>{posts?.length || 0} Posts</span>
           <span>·</span>
-          <span>{reels?.length || 0} reels</span>
+          <span>{stories?.length || 0} Stories</span>
           <span>·</span>
-          <span>{stories?.length || 0} stories</span>
+          <span>{reels?.length || 0} Reels</span>
         </div>
       </header>
 
-      <main className="w-full max-w-lg px-6 pt-6 flex flex-col items-center">
-        <div className="bg-white text-black rounded-full p-1.5 w-full max-w-sm flex items-center justify-between shadow-2xl mb-8">
-          {["Post", "Story", "Reel"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => {
-                setActiveTab(tab);
-                handleClearFile();
-                setMessage({ text: "", type: "" });
-              }}
-              className={`flex-1 text-center font-bold text-sm py-2.5 rounded-full transition-all duration-300 cursor-pointer ${
-                activeTab === tab
-                  ? "bg-black text-white shadow-lg"
-                  : "text-black hover:bg-gray-100"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
+      <main className="w-full max-w-lg px-5 pt-6 flex flex-col items-center">
+        {/* Create Mode Tab Switcher */}
+        <div className="bg-gray-900 border border-gray-800 text-white rounded-full p-1.5 w-full max-w-md flex items-center justify-between shadow-2xl mb-6">
+          {[
+            { name: "Post", icon: FiImage },
+            { name: "Story", icon: FiClock },
+            { name: "Reel", icon: FiFilm },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.name;
+            return (
+              <button
+                key={tab.name}
+                onClick={() => {
+                  setActiveTab(tab.name);
+                  handleClearFile();
+                  setMessage({ text: "", type: "" });
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 font-bold text-xs py-2.5 rounded-full transition-all duration-300 cursor-pointer ${
+                  isActive
+                    ? "bg-white text-black shadow-lg"
+                    : "text-gray-400 hover:text-white hover:bg-gray-800/60"
+                }`}
+              >
+                <Icon size={15} />
+                <span>{tab.name}</span>
+              </button>
+            );
+          })}
         </div>
+
+        {/* Tab Description Context Banner */}
+        <p className="text-xs text-gray-400 text-center mb-6 font-medium">
+          {activeTab === "Post" && "Share photos or videos to your feed"}
+          {activeTab === "Story" && "Share a 24-hour photo or video story"}
+          {activeTab === "Reel" && "Share short videos to the Reels feed"}
+        </p>
 
         {message.text && (
           <div
@@ -196,11 +218,16 @@ function Upload() {
         {!previewUrl ? (
           <label
             htmlFor="mediaFileInput"
-            className="bg-[#0c1017] border border-gray-800 rounded-2xl w-full max-w-md h-[220px] md:h-[240px] flex flex-col items-center justify-center cursor-pointer hover:border-gray-700 hover:bg-[#101520] transition-all shadow-2xl p-6 group"
+            className="bg-gray-950 border border-gray-800 rounded-3xl w-full max-w-md h-[240px] md:h-[260px] flex flex-col items-center justify-center cursor-pointer hover:border-gray-700 hover:bg-gray-900/60 transition-all shadow-2xl p-6 group relative overflow-hidden"
           >
-            <FiPlusSquare className="text-white text-3xl mb-3 group-hover:scale-110 transition-transform" />
-            <span className="text-sm font-semibold text-gray-200">
-              Upload {activeTab.toLowerCase()} {activeTab === "Reel" && "(Video Only)"}
+            <div className="w-16 h-16 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center mb-4 text-gray-300 group-hover:scale-110 transition-transform">
+              <FiPlusSquare className="text-2xl" />
+            </div>
+            <span className="text-sm font-bold text-white mb-1">
+              Select {activeTab} File
+            </span>
+            <span className="text-xs text-gray-400 font-medium">
+              {activeTab === "Reel" ? "Supports MP4, MOV videos" : "Supports Photos & Videos"}
             </span>
             <input
               type="file"
@@ -218,23 +245,25 @@ function Upload() {
               onRemove={handleClearFile}
             />
 
-            <div className="w-full flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                Caption
-              </label>
-              <textarea
-                value={caption}
-                onChange={(e) => setCaption(e.target.value)}
-                placeholder={`Write a caption for your ${activeTab.toLowerCase()}...`}
-                rows={3}
-                className="w-full rounded-xl bg-gray-900 border border-gray-800 p-3.5 text-white text-sm outline-none focus:border-gray-700 transition resize-none"
-              />
-            </div>
+            {activeTab !== "Story" && (
+              <div className="w-full flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">
+                  Caption
+                </label>
+                <textarea
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                  placeholder={`Write a caption for your ${activeTab.toLowerCase()}...`}
+                  rows={3}
+                  className="w-full rounded-2xl bg-gray-950 border border-gray-800 p-3.5 text-white text-sm outline-none focus:border-gray-700 transition resize-none placeholder-gray-500"
+                />
+              </div>
+            )}
 
             <button
               onClick={handleUpload}
               disabled={loading || postLoading || reelLoading || storyLoading}
-              className="w-full h-12 rounded-xl bg-white text-black font-bold text-sm hover:bg-gray-200 transition shadow-lg flex items-center justify-center cursor-pointer disabled:opacity-60 mt-2"
+              className="w-full h-12 rounded-2xl bg-white text-black font-bold text-sm hover:bg-gray-200 transition shadow-lg flex items-center justify-center cursor-pointer disabled:opacity-60 mt-2"
             >
               {loading ? (
                 <ClipLoader size={20} color="#000000" />

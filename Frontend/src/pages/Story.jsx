@@ -70,6 +70,13 @@ function Story() {
     });
 
     const groups = Array.from(map.values());
+    groups.forEach((g) => {
+      g.storiesList.sort((a, b) => {
+        const timeA = new Date(a.createdAt || a.date || 0).getTime();
+        const timeB = new Date(b.createdAt || b.date || 0).getTime();
+        return timeA - timeB;
+      });
+    });
     groups.sort((a, b) => (b.isOwnGroup ? 1 : 0) - (a.isOwnGroup ? 1 : 0));
     return groups;
   }, [stories, currentUserId, userData]);
@@ -162,6 +169,20 @@ function Story() {
       setProgress(0);
     }
   };
+
+  // Support Keyboard Left / Right Arrow navigation
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "ArrowRight") {
+        goToNextStory();
+      } else if (e.key === "ArrowLeft") {
+        goToPrevStory();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [currentStoryIdx, activeGroupIdx, currentStoryList.length, storyGroups.length]);
 
   useEffect(() => {
     if (
@@ -312,7 +333,7 @@ function Story() {
           <p className="text-xs font-semibold text-gray-400">Loading Stories...</p>
         </div>
       ) : currentStory ? (
-        <div className="relative w-full max-w-md h-full max-h-[94vh] md:rounded-2xl overflow-hidden bg-black flex flex-col items-center justify-between border border-gray-900 shadow-2xl transition-all duration-300">
+        <div className="relative w-full max-w-lg h-full max-h-screen md:rounded-2xl overflow-hidden bg-black flex flex-col items-center justify-between border-0 md:border border-gray-900 shadow-2xl transition-all duration-300">
           
         
           <div className={`relative w-full transition-all duration-300 ${showViewersModal ? "h-[46%]" : "h-full"}`}>
@@ -436,7 +457,7 @@ function Story() {
                 <video
                   ref={storyVideoRef}
                   src={currentStory.media}
-                  className="w-full h-full object-contain md:object-cover"
+                  className="w-full h-full object-cover"
                   autoPlay
                   playsInline
                   muted={isMuted}
@@ -447,38 +468,29 @@ function Story() {
                 <img
                   src={currentStory.media}
                   alt="Story content"
-                  className="w-full h-full object-contain md:object-cover"
+                  className="w-full h-full object-contain"
                 />
               )}
 
-              {/* Left Nav Button */}
-              <button
+         
+              <div
                 onClick={(e) => {
                   e.stopPropagation();
                   goToPrevStory();
                 }}
-                className={`absolute left-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-2.5 rounded-full backdrop-blur-sm transition ${
-                  isPaused || showViewersModal ? "opacity-0 pointer-events-none" : "opacity-100"
-                }`}
-              >
-                <FiChevronLeft size={20} />
-              </button>
+                className="absolute left-0 top-0 w-1/3 h-full z-20 cursor-pointer"
+              />
 
-              {/* Right Nav Button */}
-              <button
+
+              <div
                 onClick={(e) => {
                   e.stopPropagation();
                   goToNextStory();
                 }}
-                className={`absolute right-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-2.5 rounded-full backdrop-blur-sm transition ${
-                  isPaused || showViewersModal ? "opacity-0 pointer-events-none" : "opacity-100"
-                }`}
-              >
-                <FiChevronRight size={20} />
-              </button>
+                className="absolute right-0 top-0 w-2/3 h-full z-20 cursor-pointer"
+              />
             </div>
-
-            {/* Bottom Controls / Viewers & Delete Bar*/}
+            
             {!showViewersModal && (
               <div
                 className={`absolute bottom-4 left-4 right-4 z-30 flex items-center justify-between transition-opacity duration-200 ${

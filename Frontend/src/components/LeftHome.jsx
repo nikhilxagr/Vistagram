@@ -39,7 +39,7 @@ function LeftHome() {
         <img
           src={logo}
           alt="Vistagram"
-          className="w-[120px] object-contain cursor-pointer hover:opacity-80 transition"
+          className="h-10 w-auto scale-130 transform origin-left object-contain cursor-pointer hover:opacity-80 transition"
           onClick={() => navigate("/")}
         />
         <FaRegHeart className="text-white w-5 h-5 cursor-pointer hover:text-red-500 transition" />

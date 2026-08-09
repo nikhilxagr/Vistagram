@@ -13,7 +13,7 @@ const storySlice = createSlice({
       state.stories = action.payload;
     },
     addStory: (state, action) => {
-      state.stories.unshift(action.payload);
+      state.stories.push(action.payload);
     },
     removeStory: (state, action) => {
       state.stories = state.stories.filter((s) => s._id !== action.payload);

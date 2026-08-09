@@ -84,6 +84,60 @@ export const getPostById = async (req, res) => {
   }
 };
 
+export const editPost = async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const userId = req.userId || req.user?._id;
+    const { caption } = req.body;
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    if (post.author.toString() !== userId.toString()) {
+      return res.status(403).json({ message: "Unauthorized to edit this post" });
+    }
+
+    post.caption = caption;
+    await post.save();
+
+    const updatedPost = await Post.findById(postId)
+      .populate("author", "name username profileImage")
+      .populate({
+        path: "comments.author",
+        select: "name username profileImage",
+      });
+
+    return res.status(200).json({ message: "Post updated successfully", post: updatedPost });
+  } catch (error) {
+    return res.status(500).json({ message: "Error updating post", error: error.message });
+  }
+};
+
+export const deletePost = async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const userId = req.userId || req.user?._id;
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    if (post.author.toString() !== userId.toString()) {
+      return res.status(403).json({ message: "Unauthorized to delete this post" });
+    }
+
+    await Post.findByIdAndDelete(postId);
+    await User.findByIdAndUpdate(userId, { $pull: { posts: postId } });
+
+    return res.status(200).json({ message: "Post deleted successfully", postId });
+  } catch (error) {
+    return res.status(500).json({ message: "Error deleting post", error: error.message });
+  }
+};
+
 export const likePost = async (req, res) => {
   try {
     const postId = req.params.id;

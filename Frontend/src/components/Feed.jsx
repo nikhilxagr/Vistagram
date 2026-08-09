@@ -15,6 +15,7 @@ import { ClipLoader } from "react-spinners";
 import axios from "axios";
 import { serverUrl } from "../App.jsx";
 import { FaRegHeart } from "react-icons/fa";
+import { FiPlus } from "react-icons/fi";
 
 function Feed() {
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ function Feed() {
     Boolean(userData?.story && userData.story.length > 0) ||
     Boolean(userData?.stories && userData.stories.length > 0);
 
-  // others active stories by author ID
+  // Group other users' active stories by author ID
   const otherStoriesGrouped = React.useMemo(() => {
     if (!stories || stories.length === 0) return [];
 
@@ -68,6 +69,7 @@ function Feed() {
     return Array.from(map.values());
   }, [stories, currentUserId]);
 
+  // Check if all stories in a group have been viewed
   const checkIsGroupSeen = React.useCallback(
     (storiesList) => {
       if (!storiesList || storiesList.length === 0) return false;
@@ -148,7 +150,8 @@ function Feed() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-black flex flex-col items-center select-none">
+    <div className="w-full max-w-2xl min-h-screen bg-black text-white flex flex-col items-center select-none">
+      {/* Hidden File Input for Story Upload */}
       <input
         type="file"
         ref={fileInputRef}
@@ -156,18 +159,29 @@ function Feed() {
         accept="image/*,video/*"
         className="hidden"
       />
-      <div className="w-full max-w-2xl flex items-center justify-between px-6 py-4 border-b border-gray-900 sticky top-0 bg-black/90 backdrop-blur-md z-40">
+      <div className="w-full flex items-center justify-between px-5 py-3 border-b border-gray-900/80 sticky top-0 bg-black/95 backdrop-blur-md z-40 lg:hidden">
+        <button
+          onClick={() => navigate("/upload")}
+          className="text-white hover:text-gray-300 transition cursor-pointer p-1"
+          aria-label="Upload Post, Story or Reel"
+        >
+          <FiPlus size={28} className="stroke-[2.5]" />
+        </button>
+
         <img
           src={logo}
           alt="Vistagram"
-          className="w-[100px] cursor-pointer hover:opacity-80 transition"
+          className="h-11 sm:h-12 w-auto max-w-[220px] scale-150 transform object-contain cursor-pointer hover:opacity-80 transition origin-center"
           onClick={() => navigate("/")}
         />
-        <div>
-          <FaRegHeart className="text-white w-[22px] h-[22px]" />
-        </div>
+
+        <button className="text-white hover:text-red-500 transition cursor-pointer p-1">
+          <FaRegHeart size={24} />
+        </button>
       </div>
-      <div className="flex w-full justify-start overflow-x-auto gap-4 items-center p-4 no-scrollbar border-b border-gray-900/60 bg-black">
+
+      {/* Stories Bar */}
+      <div className="flex w-full justify-start overflow-x-auto gap-4 items-center px-5 py-3.5 no-scrollbar border-b border-gray-900/60 bg-black">
         <StoryCard
           isYourStory={true}
           hasStory={hasUserStory}
@@ -178,6 +192,8 @@ function Feed() {
           onPlusClick={handlePlusClick}
           loading={isUploadingStory}
         />
+
+        {/* Other Users' Stories Cards */}
         {otherStoriesGrouped.map((userGroup, gIdx) => {
           const isGroupSeen = checkIsGroupSeen(userGroup.storiesList);
           return (
@@ -194,19 +210,19 @@ function Feed() {
         })}
       </div>
 
-      {/* Main Feed Posts List */}
-      <div className="w-full min-h-screen flex flex-col items-center gap-6 px-2 sm:px-6 pt-8 bg-white rounded-t-[40px] relative pb-[120px]">
+      {/* Main Feed Posts List*/}
+      <div className="w-full min-h-screen flex flex-col items-center gap-4 sm:gap-6 px-0 sm:px-4 pt-2 sm:pt-6 bg-black relative pb-[80px] sm:pb-[120px]">
         {postsLoading && (!posts || posts.length === 0) ? (
           <div className="flex flex-col items-center justify-center my-12 gap-3">
-            <ClipLoader size={30} color="#000000" />
-            <p className="text-xs font-semibold text-gray-500">Loading feed posts...</p>
+            <ClipLoader size={30} color="#ffffff" />
+            <p className="text-xs font-semibold text-gray-400">Loading feed posts...</p>
           </div>
         ) : posts && posts.length > 0 ? (
           posts.map((post) => <Post key={post._id} post={post} />)
         ) : (
           <div className="flex flex-col items-center justify-center my-12 text-center">
-            <p className="text-sm font-bold text-gray-700">No posts available yet</p>
-            <p className="text-xs text-gray-400 mt-1">Be the first to share a post on Vistagram!</p>
+            <p className="text-sm font-bold text-gray-300">No posts available yet</p>
+            <p className="text-xs text-gray-500 mt-1">Be the first to share a post on Vistagram!</p>
           </div>
         )}
 
