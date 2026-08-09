@@ -13,7 +13,7 @@ import Story from "./pages/Story";
 import useGetCurrentUser from "./hooks/useGetCurrentUser";
 import { ClipLoader } from "react-spinners";
 
-export const serverUrl = "http://localhost:8000";
+export const serverUrl = import.meta.env.VITE_SERVER_URL || "http://localhost:8000";
 
 function App() {
   useGetCurrentUser();

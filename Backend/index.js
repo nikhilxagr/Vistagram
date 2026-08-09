@@ -11,20 +11,29 @@ import storyRouter from "./routes/story.routes.js";
 
 dotenv.config();
 const app = express();
-const PORT = process.env.PORT || 5000;
+app.set("trust proxy", 1);
+
+const PORT = process.env.PORT || 8000;
+
+const clientUrl = process.env.CLIENT_URL ? process.env.CLIENT_URL.trim().replace(/\/$/, "") : "";
 
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
   "http://localhost:5175",
-  process.env.CLIENT_URL,
+  clientUrl,
 ].filter(Boolean);
 
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin) || /^http:\/\/localhost:\d+$/.test(origin)) {
+    if (
+      !origin ||
+      allowedOrigins.includes(origin) ||
+      /^http:\/\/localhost:\d+$/.test(origin) ||
+      (clientUrl && origin.replace(/\/$/, "") === clientUrl)
+    ) {
       return callback(null, true);
     }
     return callback(new Error("Not allowed by CORS"));
