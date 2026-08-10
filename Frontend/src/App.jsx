@@ -10,8 +10,10 @@ import EditProfile from "./pages/EditProfile";
 import Upload from "./pages/Upload";
 import Reels from "./pages/Reels";
 import Story from "./pages/Story";
+import Messages from "./pages/Messages";
 import useGetCurrentUser from "./hooks/useGetCurrentUser";
 import { ClipLoader } from "react-spinners";
+import MessageArea from "./pages/MessageArea";
 
 export const serverUrl = import.meta.env.VITE_SERVER_URL || "http://localhost:8000";
 
@@ -66,6 +68,14 @@ function App() {
       <Route
         path="/story"
         element={userData ? <Story /> : <Navigate to="/signin" />}
+      />
+      <Route
+        path="/messages"
+        element={userData ? <Messages /> : <Navigate to="/signin" />}
+      />
+      <Route
+        path="/messageArea"
+        element={userData ? <MessageArea /> : <Navigate to="/signin" />}
       />
 
       <Route path="*" element={<Navigate to="/" />} />

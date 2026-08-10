@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import { setProfileData, clearUserData, setUserData } from "../redux/userSlice";
+import { setSelectedUser } from "../redux/message.Slice";
 import { serverUrl } from "../App.jsx";
 import dp from "../assets/dp.png";
 import { FiArrowLeft, FiGrid, FiBookmark, FiFilm, FiPlay, FiHeart, FiMessageCircle, FiX } from "react-icons/fi";
@@ -293,7 +294,13 @@ function Profile() {
                 {followLoading ? "..." : isFollowingTarget ? "Following" : "Follow"}
               </button>
 
-              <button className="px-8 py-2 rounded-full bg-white text-black font-semibold text-sm hover:bg-gray-200 transition shadow cursor-pointer">
+              <button
+                className="px-8 py-2 rounded-full bg-white text-black font-semibold text-sm hover:bg-gray-200 transition shadow cursor-pointer"
+                onClick={() => {
+                  dispatch(setSelectedUser(fetchedUser));
+                  navigate("/messageArea");
+                }}
+              >
                 Message
               </button>
             </div>

@@ -41,10 +41,7 @@ function Feed() {
     return authorId && currentUserId && authorId === currentUserId;
   });
 
-  const hasUserStory =
-    myStories.length > 0 ||
-    Boolean(userData?.story && userData.story.length > 0) ||
-    Boolean(userData?.stories && userData.stories.length > 0);
+  const hasUserStory = myStories.length > 0;
 
   // Group other users' active stories by author ID
   const otherStoriesGrouped = React.useMemo(() => {

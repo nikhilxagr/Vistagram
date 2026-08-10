@@ -51,7 +51,7 @@ function Nav() {
 
       {/* 3. + Post */}
       <div
-        className="cursor-pointer hover:scale-110 transition p-2 flex items-center justify-center"
+        className="hidden lg:flex cursor-pointer hover:scale-110 transition p-2 items-center justify-center"
         onClick={() => navigate("/upload")}
         title="Create Post, Story or Reel"
       >
@@ -60,8 +60,8 @@ function Nav() {
 
       {/* 4. Messages */}
       <div
-        className="cursor-pointer hover:scale-110 transition p-2"
-        onClick={() => navigate("/chat")}
+        className="cursor-pointer hover:scale-110 transition p-2 lg:hidden"
+        onClick={() => navigate("/messages")}
         title="Messages"
       >
         <FiSend className="text-white w-[22px] h-[22px] -rotate-12" />
