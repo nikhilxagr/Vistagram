@@ -6,7 +6,9 @@ import { sendMessage, getAllMessages, getprevUserChats } from "../controllers/me
 const messageRouter = express.Router();
 
 messageRouter.post("/send/:receiverId", isAuth, upload.single("image"), sendMessage);
-messageRouter.get("/getall", isAuth, getAllMessages);
+messageRouter.get("/getAll/:receiverId", isAuth, getAllMessages);
+messageRouter.get("/getall/:receiverId", isAuth, getAllMessages);
+messageRouter.get("/getAll", isAuth, getAllMessages);
 messageRouter.put("/prevChats", isAuth, getprevUserChats);
 
 export default messageRouter;
