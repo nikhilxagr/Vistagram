@@ -8,10 +8,12 @@ import dp from "../assets/dp.png";
 
 function OtherUser({ user }) {
   const { userData } = useSelector((state) => state.user);
+  const onlineUsers = useSelector((state) => state.socket?.onlineUsers || []);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const targetId = user?._id || user?.id;
+  const isOnline = Boolean(targetId && onlineUsers.includes(targetId.toString()));
 
   const checkIfFollowing = () => {
     if (!userData?.following || !targetId) return false;
@@ -66,16 +68,22 @@ function OtherUser({ user }) {
   return (
     <div className="w-full flex items-center justify-between py-2 border-b border-gray-900/60 last:border-none">
       <div className="flex items-center gap-3 overflow-hidden">
-        <div
-          className="w-11 h-11 rounded-full overflow-hidden border border-gray-800 flex-shrink-0 cursor-pointer"
-          onClick={() => navigate(`/profile/${user.username || user.userName}`)}
-        >
-          <img
-            src={user.profileImage || dp}
-            alt={user.username}
-            className="w-full h-full object-cover"
-          />
+        <div className="relative">
+          <div
+            className="w-11 h-11 rounded-full overflow-hidden border border-gray-800 flex-shrink-0 cursor-pointer"
+            onClick={() => navigate(`/profile/${user.username || user.userName}`)}
+          >
+            <img
+              src={user.profileImage || dp}
+              alt={user.username}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          {isOnline && (
+            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-black rounded-full shadow-md" />
+          )}
         </div>
+
         <div className="overflow-hidden">
           <div
             className="text-sm font-semibold text-white truncate cursor-pointer hover:underline"
@@ -83,8 +91,12 @@ function OtherUser({ user }) {
           >
             {user.username || user.userName}
           </div>
-          <div className="text-xs text-gray-400 truncate">
-            {user.name}
+          <div className="text-xs text-gray-400 truncate flex items-center gap-1">
+            {isOnline ? (
+              <span className="text-green-400 font-semibold">Online</span>
+            ) : (
+              user.name || ""
+            )}
           </div>
         </div>
       </div>

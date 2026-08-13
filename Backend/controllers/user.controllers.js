@@ -211,3 +211,27 @@ export const followUser = async (req, res) => {
     res.status(500).json({ message: "Failed to follow/unfollow user" });
   }
 };
+
+export const followingList = async (req, res) => {
+  try {
+    const result = await User.findById(req.userId)
+      .select("following")
+      .populate("following", "name username profileImage");
+    if (!result) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    return res.status(200).json({ following: result.following });
+  } catch (error) {
+    console.error("Error in followingList:", error);
+    res.status(500).json({ message: "Failed to fetch following list" });
+  }
+};
+
+export default {
+  getCurrentUser,
+  suggestedUsers,
+  editProfile,
+  getProfile,
+  followUser,
+  followingList,
+};

@@ -1,7 +1,9 @@
 import Message from "../models/message.model.js";
 import Conversation from "../models/conversation.model.js";
+import User from "../models/user.model.js";
 import uploadOnCloudinary from "../config/cloudinary.js";
 import fs from "fs";
+import { io, getReceiverSocketId } from "../socket.js";
 
 export const sendMessage = async (req, res) => {
   try {
@@ -48,6 +50,12 @@ export const sendMessage = async (req, res) => {
     } else {
       conversation.messages.push(newMessage._id);
       await conversation.save();
+    }
+
+    // Socket.io real-time communication
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("newMessage", newMessage);
     }
 
     return res.status(200).json({
@@ -110,14 +118,21 @@ export const getprevUserChats = async (req, res) => {
       });
     });
 
-    const previousUsers = Object.values(userMap);
+    let previousUsers = Object.values(userMap);
+
+    if (previousUsers.length === 0) {
+      const otherUsers = await User.find({ _id: { $ne: currentUserId } })
+        .select("name username profileImage")
+        .limit(20);
+      previousUsers = otherUsers;
+    }
 
     return res.status(200).json({
-      message: "Previous users retrieved successfully",
+      message: "Users retrieved successfully",
       data: previousUsers,
     });
   } catch (error) {
-    console.error("Error retrieving previous user chats:", error);
-    res.status(500).json({ message: "Failed to retrieve previous users", error: error.message });
+    console.error("Error retrieving user chats:", error);
+    res.status(500).json({ message: "Failed to retrieve users", error: error.message });
   }
 };

@@ -1,6 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { io } from "socket.io-client";
+import { ClipLoader } from "react-spinners";
+
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -11,16 +14,55 @@ import Upload from "./pages/Upload";
 import Reels from "./pages/Reels";
 import Story from "./pages/Story";
 import Messages from "./pages/Messages";
-import useGetCurrentUser from "./hooks/useGetCurrentUser";
-import { ClipLoader } from "react-spinners";
 import MessageArea from "./pages/MessageArea";
+import useGetCurrentUser from "./hooks/useGetCurrentUser";
+import { setSocket, setOnlineUsers } from "./redux/socket.Slice";
+import { setPostLikes, setPostComments } from "./redux/post.Slice";
 
 export const serverUrl = import.meta.env.VITE_SERVER_URL || "http://localhost:8000";
 
 function App() {
   useGetCurrentUser();
+  const dispatch = useDispatch();
 
   const { userData, loading } = useSelector((state) => state.user);
+  const socket = useSelector((state) => state.socket?.socket);
+
+  useEffect(() => {
+    const userId = userData?._id || userData?.id;
+    if (userId) {
+      const socketIo = io(serverUrl, {
+        withCredentials: true,
+        query: {
+          userId: userId.toString(),
+        },
+      });
+
+      dispatch(setSocket(socketIo));
+
+      socketIo.on("getOnlineUsers", (onlineUserIds) => {
+        dispatch(setOnlineUsers(onlineUserIds));
+      });
+
+      socketIo.on("postLiked", (data) => {
+        dispatch(setPostLikes(data));
+      });
+
+      socketIo.on("commentAdded", (data) => {
+        dispatch(setPostComments(data));
+      });
+
+      return () => {
+        socketIo.close();
+        dispatch(setSocket(null));
+      };
+    } else {
+      if (socket) {
+        socket.close();
+        dispatch(setSocket(null));
+      }
+    }
+  }, [userData, dispatch]);
 
   if (loading) {
     return (

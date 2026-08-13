@@ -36,7 +36,6 @@ function Reels() {
     return Array.from(map.values());
   }, [reels, posts]);
 
-  // Automatically scroll to the selected video reel if passed in location.state
   useEffect(() => {
     const targetPostId = location.state?.postId || location.state?.reelId;
     if (!targetPostId || !allReelVideos || allReelVideos.length === 0) return;
@@ -55,14 +54,18 @@ function Reels() {
 
   return (
     <div className="w-full h-screen bg-black text-white relative overflow-hidden flex flex-col items-center justify-center select-none">
-      {/* Top Left Back Button */}
-      <button
-        onClick={() => navigate(-1)}
-        className="absolute top-5 left-5 z-50 bg-black/50 backdrop-blur-md text-white p-2.5 rounded-full border border-gray-800 hover:bg-gray-900 transition cursor-pointer"
-        aria-label="Go Back"
-      >
-        <FiArrowLeft size={18} />
-      </button>
+      <div className="absolute top-5 left-5 z-50 flex items-center gap-3">
+        <button
+          onClick={() => navigate(-1)}
+          className="bg-black/50 backdrop-blur-md text-white p-2.5 rounded-full border border-gray-800 hover:bg-gray-900 transition cursor-pointer"
+          aria-label="Go Back"
+        >
+          <FiArrowLeft size={18} />
+        </button>
+        <span className="text-xl font-bold text-white drop-shadow-lg tracking-wide select-none">
+          Reels
+        </span>
+      </div>
 
       {isLoading ? (
         <div className="flex flex-col items-center justify-center gap-3">

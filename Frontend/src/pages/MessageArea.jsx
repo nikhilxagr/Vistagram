@@ -17,6 +17,8 @@ function MessageArea() {
 
   const { selectedUser, messages } = useSelector((state) => state.message);
   const { userData } = useSelector((state) => state.user);
+  const socket = useSelector((state) => state.socket?.socket);
+  const onlineUsers = useSelector((state) => state.socket?.onlineUsers || []);
 
   const [textMessage, setTextMessage] = useState("");
   const [frontendImage, setFrontendImage] = useState(null);
@@ -28,10 +30,13 @@ function MessageArea() {
   const currentUserId = (userData?._id || userData?.id)?.toString();
   const targetUserId = (selectedUser?._id || selectedUser?.id)?.toString();
 
+  const isOnline = Boolean(targetUserId && onlineUsers.includes(targetUserId));
+
   const username = selectedUser?.username || selectedUser?.userName || "user";
   const name = selectedUser?.name || selectedUser?.fullName || "";
   const profileImage = selectedUser?.profileImage || dp;
 
+  // Fetch conversation messages
   const getAllMessages = async () => {
     if (!targetUserId) return;
     try {
@@ -52,6 +57,20 @@ function MessageArea() {
       getAllMessages();
     }
   }, [selectedUser]);
+
+  // Real-time socket listener for incoming new messages
+  useEffect(() => {
+    if (!socket) return;
+    const handleNewMessage = (newMsg) => {
+      const msgSenderId = (newMsg.sender?._id || newMsg.sender?.id || newMsg.sender)?.toString();
+      if (msgSenderId === targetUserId) {
+        dispatch(setMessages([...(messages || []), newMsg]));
+      }
+    };
+
+    socket.on("newMessage", handleNewMessage);
+    return () => socket.off("newMessage", handleNewMessage);
+  }, [socket, messages, targetUserId, dispatch]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -127,7 +146,7 @@ function MessageArea() {
       <div className="w-full flex items-center gap-3 px-4 py-3 bg-black border-b border-gray-900 sticky top-0 z-50">
         <button
           onClick={() => navigate(-1)}
-          className="text-white hover:text-gray-300 p-1 cursor-pointer transition"
+          className="text-white hover:text-gray-300 p-1 cursor-pointer transition lg:hidden"
           aria-label="Back"
         >
           <MdOutlineKeyboardBackspace size={26} />
@@ -137,26 +156,36 @@ function MessageArea() {
           onClick={() => navigate(`/profile/${username}`)}
           className="flex items-center gap-3 cursor-pointer group"
         >
-          <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-800 bg-gray-900 flex-shrink-0">
-            <img
-              src={profileImage}
-              alt={username}
-              className="w-full h-full object-cover group-hover:scale-105 transition"
-            />
+          <div className="relative">
+            <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-800 bg-gray-900 flex-shrink-0">
+              <img
+                src={profileImage}
+                alt={username}
+                className="w-full h-full object-cover group-hover:scale-105 transition"
+              />
+            </div>
+            {isOnline && (
+              <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-black rounded-full shadow-md" />
+            )}
           </div>
 
           <div className="flex flex-col text-left">
             <span className="text-sm font-bold text-white leading-tight group-hover:underline">
               {username}
             </span>
-            {name && (
-              <span className="text-xs text-gray-400 font-medium">{name}</span>
-            )}
+            <div className="text-xs text-gray-400 font-medium flex items-center gap-1.5">
+              {isOnline ? (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-green-400 font-semibold">Active now</span>
+                </>
+              ) : (
+                name || "Offline"
+              )}
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Optional Selected Image Attachment  */}
       {frontendImage && (
         <div className="w-full h-44 bg-gray-950 border-b border-gray-900 flex items-center justify-center overflow-hidden relative p-2">
           <img
@@ -178,7 +207,7 @@ function MessageArea() {
         </div>
       )}
 
-      {/*  Chat Messages Body */}
+      {/* Middle Chat Messages Body */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2 bg-black">
         {messages && messages.length > 0 ? (
           messages.map((msg, idx) => {
@@ -206,7 +235,6 @@ function MessageArea() {
         )}
         <div ref={messagesEndRef} />
       </div>
-
       <form
         onSubmit={handleSendMessage}
         className="w-full pb-5 pt-2 px-4 flex justify-center bg-black sticky bottom-0 z-40"

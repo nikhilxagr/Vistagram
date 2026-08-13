@@ -99,6 +99,16 @@ function Post({ post }) {
   }, [userData?.savedPosts, post?._id]);
 
   useEffect(() => {
+    if (post?.likes) {
+      const liked = post.likes.some(
+        (id) => (id._id || id)?.toString() === currentUserId?.toString()
+      );
+      setIsLiked(liked);
+      setLikesCount(post.likes.length);
+    }
+  }, [post?.likes, currentUserId]);
+
+  useEffect(() => {
     if (post?.comments) {
       setCommentsList(post.comments);
     }
@@ -462,7 +472,7 @@ function Post({ post }) {
         )}
 
         {post?.mediaType === "video" ? (
-          <div className="relative w-full h-full flex items-center justify-center">
+          <div className="relative w-full h-full flex items-center justify-center group">
             <video
               ref={videoRef}
               src={post?.media}
@@ -482,7 +492,9 @@ function Post({ post }) {
             </button>
 
             {/* Play / Pause  Button */}
-            <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+            <div className={`absolute inset-0 flex items-center justify-center z-20 pointer-events-none transition-opacity duration-200 ${
+              videoPlaying ? "opacity-0 group-hover:opacity-100" : "opacity-100"
+            }`}>
               <button
                 onClick={toggleVideoPlay}
                 className="pointer-events-auto bg-black/50 hover:bg-black/70 backdrop-blur-md rounded-full p-4 border border-white/20 hover:scale-110 transition cursor-pointer shadow-2xl"

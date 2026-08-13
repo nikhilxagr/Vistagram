@@ -28,12 +28,26 @@ const postSlice = createSlice({
       const { postId, userId } = action.payload;
       const post = state.posts.find((p) => p._id === postId);
       if (post) {
-        const liked = post.likes?.includes(userId);
+        const liked = post.likes?.some((id) => (id._id || id).toString() === userId.toString());
         if (liked) {
-          post.likes = post.likes.filter((id) => id !== userId);
+          post.likes = post.likes.filter((id) => (id._id || id).toString() !== userId.toString());
         } else {
           post.likes = [...(post.likes || []), userId];
         }
+      }
+    },
+    setPostLikes: (state, action) => {
+      const { postId, likes } = action.payload;
+      const post = state.posts.find((p) => p._id === postId);
+      if (post) {
+        post.likes = likes;
+      }
+    },
+    setPostComments: (state, action) => {
+      const { postId, comments } = action.payload;
+      const post = state.posts.find((p) => p._id === postId);
+      if (post) {
+        post.comments = comments;
       }
     },
     addCommentToPost: (state, action) => {
@@ -66,6 +80,8 @@ export const {
   removePost,
   updatePost,
   toggleLikePost,
+  setPostLikes,
+  setPostComments,
   addCommentToPost,
   setSelectedPost,
   setPostLoading,

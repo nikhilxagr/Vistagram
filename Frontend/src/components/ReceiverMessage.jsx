@@ -1,5 +1,16 @@
 import React from "react";
 import dp from "../assets/dp.png";
+import ReelMessageCard from "./ReelMessageCard";
+
+function parseReelShare(text) {
+  if (!text || !text.includes('"type":"reel_share"')) return null;
+  try {
+    const data = JSON.parse(text);
+    return data?.type === "reel_share" ? data : null;
+  } catch {
+    return null;
+  }
+}
 
 function ReceiverMessage({ message, authorImage }) {
   const timeString = message.createdAt
@@ -10,6 +21,7 @@ function ReceiverMessage({ message, authorImage }) {
     : "";
 
   const textContent = message.messages || message.message;
+  const reelData = parseReelShare(textContent);
 
   return (
     <div className="flex items-start gap-2.5 my-1 self-start w-full">
@@ -22,20 +34,28 @@ function ReceiverMessage({ message, authorImage }) {
       </div>
 
       <div className="flex flex-col items-start max-w-[78%] sm:max-w-[68%]">
-        {message.image && (
-          <div className="rounded-2xl overflow-hidden mb-1 border border-gray-800 max-w-[260px] max-h-[260px] shadow-lg">
-            <img
-              src={message.image}
-              alt="Received attachment"
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
 
-        {textContent && (
-          <div className="bg-[#262626] text-white rounded-2xl rounded-tl-xs px-4 py-2.5 text-xs sm:text-sm font-medium leading-relaxed shadow-md border border-gray-800/90 break-words text-left">
-            {textContent}
-          </div>
+        {/* Reel Share Card */}
+        {reelData ? (
+          <ReelMessageCard data={reelData} />
+        ) : (
+          <>
+            {message.image && (
+              <div className="rounded-2xl overflow-hidden mb-1 border border-gray-800 max-w-[260px] max-h-[260px] shadow-lg">
+                <img
+                  src={message.image}
+                  alt="Received attachment"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+
+            {textContent && (
+              <div className="bg-[#262626] text-white rounded-2xl rounded-tl-xs px-4 py-2.5 text-xs sm:text-sm font-medium leading-relaxed shadow-md border border-gray-800/90 break-words text-left">
+                {textContent}
+              </div>
+            )}
+          </>
         )}
 
         {timeString && (

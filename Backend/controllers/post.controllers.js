@@ -2,6 +2,7 @@ import uploadOnCloudinary from "../config/cloudinary.js";
 import Post from "../models/post.model.js";
 import User from "../models/user.model.js";
 import fs from "fs";
+import { io } from "../socket.js";
 
 export const uploadPost = async (req, res) => {
   try {
@@ -154,7 +155,21 @@ export const likePost = async (req, res) => {
       post.likes.push(userId);
     }
     await post.save();
-    return res.status(200).json({ message: "Post liked/unliked successfully", likesCount: post.likes.length });
+
+    // Socket.io real-time likes
+    if (io) {
+      io.emit("postLiked", {
+        postId: post._id.toString(),
+        userId: userId.toString(),
+        likes: post.likes.map((id) => id.toString()),
+      });
+    }
+
+    return res.status(200).json({
+      message: "Post liked/unliked successfully",
+      likesCount: post.likes.length,
+      likes: post.likes,
+    });
   } catch (error) {
     return res.status(500).json({ message: "Error liking post", error: error.message });
   }
@@ -179,6 +194,14 @@ export const comments = async (req, res) => {
       path: "comments.author",
       select: "name username profileImage",
     });
+
+    // Socket.io real-time comments
+    if (io) {
+      io.emit("commentAdded", {
+        postId: postId.toString(),
+        comments: updatedPost.comments,
+      });
+    }
 
     return res.status(200).json({
       message: "Comment added successfully",

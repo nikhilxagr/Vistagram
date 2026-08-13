@@ -4,10 +4,11 @@ import { useSelector, useDispatch } from "react-redux";
 import axios from "axios";
 import { serverUrl } from "../App";
 import dp from "../assets/dp.png";
-import { FaHeart, FaRegHeart, FaRegComment } from "react-icons/fa6";
-import { FiSend, FiVolume2, FiVolumeX, FiPlay, FiX, FiArrowLeft, FiMusic } from "react-icons/fi";
+import { FaHeart, FaRegHeart, FaRegComment, FaBookmark, FaRegBookmark } from "react-icons/fa6";
+import { FiSend, FiVolume2, FiVolumeX, FiPlay, FiPause, FiX, FiArrowLeft, FiMusic } from "react-icons/fi";
 import { toggleLikeReel, addCommentToReel } from "../redux/reel.Slice";
 import { setUserData } from "../redux/userSlice";
+import ReelShareModal from "./ReelShareModal";
 
 function ReelCard({ reel }) {
   const navigate = useNavigate();
@@ -36,6 +37,7 @@ function ReelCard({ reel }) {
   );
   const [likesCount, setLikesCount] = useState(reel?.likes?.length || 0);
 
+  const [showShare, setShowShare] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [commentInput, setCommentInput] = useState("");
   const [commentsList, setCommentsList] = useState(reel?.comments || []);
@@ -51,13 +53,47 @@ function ReelCard({ reel }) {
   const [isFollowing, setIsFollowing] = useState(checkIfFollowing());
   const [followLoading, setFollowLoading] = useState(false);
 
+  const checkIfSaved = () => {
+    if (!userData?.savedPosts || !reel?._id) return false;
+    return userData.savedPosts.some(
+      (p) => (p._id || p || "").toString() === reel._id.toString()
+    );
+  };
+
+  const [isSaved, setIsSaved] = useState(checkIfSaved());
+
+  useEffect(() => {
+    setIsSaved(checkIfSaved());
+  }, [userData?.savedPosts, reel?._id]);
+
+  const handleSave = async (e) => {
+    e.stopPropagation();
+    if (!currentUserId || !reel?._id) return;
+    const nextSaved = !isSaved;
+    setIsSaved(nextSaved);
+
+    try {
+      const res = await axios.put(
+        `${serverUrl}/api/posts/${reel._id}/save`,
+        {},
+        { withCredentials: true }
+      );
+
+      if (res.data?.savedPosts && userData) {
+        dispatch(setUserData({ ...userData, savedPosts: res.data.savedPosts }));
+      }
+    } catch (error) {
+      console.error("Error saving reel:", error);
+      setIsSaved(!nextSaved);
+    }
+  };
+
   useEffect(() => {
     if (reel?.comments) {
       setCommentsList(reel.comments);
     }
   }, [reel?.comments]);
 
-  // Auto play when visible in viewport
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -80,7 +116,6 @@ function ReelCard({ reel }) {
     return () => observer.disconnect();
   }, []);
 
-  // Handle click outside comment box to close it automatically
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (commentRef.current && !commentRef.current.contains(event.target)) {
@@ -265,7 +300,7 @@ function ReelCard({ reel }) {
   };
 
   return (
-    <div className="w-full h-full relative snap-start snap-always flex items-center justify-center bg-black overflow-hidden select-none">
+    <div className="w-full h-full relative snap-start snap-always flex items-center justify-center bg-black overflow-hidden select-none group">
       {/* Video Stream Element */}
       <video
         ref={videoRef}
@@ -277,39 +312,44 @@ function ReelCard({ reel }) {
         onClick={handleSingleOrDoubleClick}
       />
 
-      {/* Gradient Bottom Vignette Overlay */}
       <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none z-10" />
 
-      {/* Double Tap Heart Pop Animation */}
       {showHeartAnim && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30 animate-in zoom-in duration-200">
           <FaHeart className="text-red-500 text-8xl drop-shadow-2xl animate-bounce" />
         </div>
       )}
 
-      {/* Top Left Back Control */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          navigate(-1);
-        }}
-        className="absolute top-5 left-5 z-20 bg-black/50 backdrop-blur-md text-white p-2.5 rounded-full border border-white/10 hover:bg-black/70 transition cursor-pointer"
-        aria-label="Go Back"
-      >
-        <FiArrowLeft size={18} />
-      </button>
-
-      {/* Center Play/Pause Indicator Overlay */}
-      {!isPlaying && (
-        <div
-          onClick={handleSingleOrDoubleClick}
-          className="absolute inset-0 flex items-center justify-center cursor-pointer bg-black/20 z-10"
+      <div className="absolute top-5 left-5 z-20 flex items-center gap-3">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(-1);
+          }}
+          className="bg-black/50 backdrop-blur-md text-white p-2.5 rounded-full border border-white/10 hover:bg-black/70 transition cursor-pointer"
+          aria-label="Go Back"
         >
-          <div className="bg-black/50 backdrop-blur-md rounded-full p-5 border border-white/20">
+          <FiArrowLeft size={18} />
+        </button>
+        <span className="text-xl font-bold text-white drop-shadow-lg tracking-wide select-none">
+          Reels
+        </span>
+      </div>
+
+      <div
+        onClick={handleSingleOrDoubleClick}
+        className={`absolute inset-0 flex items-center justify-center cursor-pointer bg-black/20 z-10 transition-opacity duration-200 ${
+          isPlaying ? "opacity-0 group-hover:opacity-100" : "opacity-100"
+        }`}
+      >
+        <div className="bg-black/50 backdrop-blur-md rounded-full p-5 border border-white/20 hover:scale-110 transition">
+          {isPlaying ? (
+            <FiPause size={36} className="text-white" />
+          ) : (
             <FiPlay size={36} className="text-white ml-1" />
-          </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Top Right Mute Control */}
       <button
@@ -348,16 +388,36 @@ function ReelCard({ reel }) {
         </button>
 
         {/* Share Action */}
-        <button className="flex flex-col items-center gap-1 cursor-pointer group">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowShare(true);
+          }}
+          className="flex flex-col items-center gap-1 cursor-pointer group"
+          aria-label="Share Reel"
+        >
           <div className="p-2.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 group-hover:scale-110 transition">
             <FiSend className="text-white text-2xl" />
           </div>
         </button>
+
+        {/* Save Action */}
+        <button
+          onClick={handleSave}
+          className="flex flex-col items-center gap-1 cursor-pointer group"
+          aria-label="Save Reel"
+        >
+          <div className="p-2.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 group-hover:scale-110 transition">
+            {isSaved ? (
+              <FaBookmark className="text-[#FFD700] text-2xl" />
+            ) : (
+              <FaRegBookmark className="text-white text-2xl" />
+            )}
+          </div>
+        </button>
       </div>
 
-      {/* Bottom Info Bar Overlay (Instagram Layout) */}
       <div className="absolute bottom-6 left-4 right-20 z-20 text-white flex flex-col gap-2 text-left">
-        {/* Author Avatar + Username + Follow Button */}
         <div className="flex items-center gap-3">
           <div
             onClick={() => navigate(`/profile/${authorUsername}`)}
@@ -417,14 +477,12 @@ function ReelCard({ reel }) {
         />
       </div>
 
-      {/* Instagram-Style Comments Drawer Modal */}
       {showComments && (
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-40 flex flex-col justify-end transition-opacity duration-300">
           <div
             ref={commentRef}
             className="w-full bg-gray-950 text-white rounded-t-3xl border-t border-gray-800 p-5 max-h-[70%] flex flex-col gap-3 shadow-2xl transition-transform transform translate-y-0 duration-300 ease-out animate-in slide-in-from-bottom"
           >
-            {/* Instagram Pull/Drag Indicator */}
             <div
               className="w-12 h-1 bg-gray-600 rounded-full mx-auto mb-1 cursor-pointer hover:bg-gray-500 transition"
               onClick={() => setShowComments(false)}
@@ -515,6 +573,14 @@ function ReelCard({ reel }) {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Reel Share Modal */}
+      {showShare && (
+        <ReelShareModal
+          reel={reel}
+          onClose={() => setShowShare(false)}
+        />
       )}
     </div>
   );

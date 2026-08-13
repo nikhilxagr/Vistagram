@@ -9,8 +9,9 @@ import postRouter from "./routes/post.routes.js";
 import reelRouter from "./routes/reel.routes.js";
 import storyRouter from "./routes/story.routes.js";
 import messageRouter from "./routes/message.routes.js";
+import { app, server } from "./socket.js";
 dotenv.config();
-const app = express();
+
 app.set("trust proxy", 1);
 
 const PORT = process.env.PORT || 8000;
@@ -49,7 +50,7 @@ app.use("/api/stories", storyRouter);
 app.use("/api/story", storyRouter);
 app.use("/api/messages", messageRouter);
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   connectDB();
   console.log(`✅ Server is running on port ${PORT}`);
 });

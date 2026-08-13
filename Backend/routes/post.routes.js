@@ -17,12 +17,15 @@ const postRouter = express.Router();
 postRouter.post("/upload", isAuth, upload.single("media"), uploadPost);
 postRouter.get("/getall", isAuth, getAllPosts);
 postRouter.get("/:id", isAuth, getPostById);
-postRouter.put("/:id/edit", isAuth, editPost);
-postRouter.put("/:id", isAuth, editPost);
 postRouter.delete("/:id", isAuth, deletePost);
+
+// sub-routes
+postRouter.put("/:id/edit", isAuth, editPost);
 postRouter.put("/:id/like", isAuth, likePost);
-postRouter.post("/:id/comment", isAuth, comments);
-postRouter.put("/:postId/save", isAuth, saved);
 postRouter.put("/:id/save", isAuth, saved);
+postRouter.post("/:id/comment", isAuth, comments);
+
+//  last
+postRouter.put("/:id", isAuth, editPost);
 
 export default postRouter;
