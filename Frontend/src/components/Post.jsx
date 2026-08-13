@@ -25,6 +25,7 @@ import {
 import { ClipLoader } from "react-spinners";
 import { toggleLikePost, addCommentToPost, removePost, updatePost } from "../redux/post.Slice";
 import { setUserData } from "../redux/userSlice";
+import ReelShareModal from "./ReelShareModal";
 
 function Post({ post }) {
   const navigate = useNavigate();
@@ -47,6 +48,7 @@ function Post({ post }) {
   );
   const [likesCount, setLikesCount] = useState(post?.likes?.length || 0);
   const [isSaved, setIsSaved] = useState(checkIfSaved());
+  const [showShare, setShowShare] = useState(false);
 
   const [showComments, setShowComments] = useState(false);
   const [commentInput, setCommentInput] = useState("");
@@ -554,7 +556,11 @@ function Post({ post }) {
             </span>
           </button>
 
-          <button className="text-white hover:text-blue-400 transition cursor-pointer group">
+          <button
+            onClick={() => setShowShare(true)}
+            className="text-white hover:text-blue-400 transition cursor-pointer group"
+            aria-label="Share Post"
+          >
             <FiSend className="text-xl group-hover:scale-110 transition-transform" />
           </button>
         </div>
@@ -689,6 +695,19 @@ function Post({ post }) {
             </div>
           </div>
         </div>
+      )}
+
+      {showShare && (
+        <ReelShareModal
+          reel={{
+            _id: post._id,
+            media: post.media,
+            mediaType: post.mediaType || "image",
+            caption: post.caption,
+            author: post.author,
+          }}
+          onClose={() => setShowShare(false)}
+        />
       )}
     </article>
   );

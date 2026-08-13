@@ -19,6 +19,7 @@ const userSlice = createSlice({
     error: null,
     suggestedUsers: null,
     profileData: null,
+    searchData: null
   },
   reducers: {
     setUserData: (state, action) => {
@@ -48,9 +49,12 @@ const userSlice = createSlice({
     },
     setProfileData: (state, action) => {
       state.profileData = action.payload;
-    }
+    },
+    setSearchData: (state, action) => {
+      state.searchData = action.payload;
+    },
   },
 });
 
-export const { setUserData, setLoading, setError, clearUserData, setSuggestedUsers, setProfileData } = userSlice.actions;
+export const { setUserData, setLoading, setError, clearUserData, setSuggestedUsers, setProfileData, setSearchData } = userSlice.actions;
 export default userSlice.reducer;

@@ -8,11 +8,15 @@ function ReelMessageCard({ data }) {
 
   if (!data?.reelId) return null;
 
-  const handleClick = () => {
-    navigate("/reels", { state: { reelId: data.reelId } });
-  };
-
   const isVideo = data.mediaType === "video" || data.media?.includes(".mp4");
+
+  const handleClick = () => {
+    if (isVideo) {
+      navigate("/reels", { state: { reelId: data.reelId } });
+    } else {
+      navigate("/home");
+    }
+  };
 
   return (
     <div

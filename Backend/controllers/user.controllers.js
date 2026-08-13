@@ -5,6 +5,7 @@ import Story from "../models/story.model.js";
 import uploadOnCloudinary from "../config/cloudinary.js";
 import fs from "fs";
 
+
 export const getCurrentUser = async (req, res) => {
   try {
     const userId = req.userId || req.user?._id;
@@ -227,6 +228,29 @@ export const followingList = async (req, res) => {
   }
 };
 
+export const search = async (req, res) => {
+  try {
+   const keyword = req.query.keyword || "";
+    if (!keyword) {
+      return res.status(400).json({ message: "Search keyword is required" });
+    }
+
+    const escapedQuery = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const users = await User.find({
+      $or: [
+        { username: { $regex: new RegExp(escapedQuery, "i") } },
+        { name: { $regex: new RegExp(escapedQuery, "i") } },
+        { email: { $regex: new RegExp(escapedQuery, "i") } },
+      ],
+    }).select("-password");
+
+    return res.status(200).json({ users });
+  } catch (error) {
+    console.error("Error in search:", error);
+    res.status(500).json({ message: "Failed to search users" });
+  }
+};
+
 export default {
   getCurrentUser,
   suggestedUsers,
@@ -234,4 +258,5 @@ export default {
   getProfile,
   followUser,
   followingList,
+  search
 };

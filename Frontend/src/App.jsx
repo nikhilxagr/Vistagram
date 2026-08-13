@@ -15,6 +15,7 @@ import Reels from "./pages/Reels";
 import Story from "./pages/Story";
 import Messages from "./pages/Messages";
 import MessageArea from "./pages/MessageArea";
+import Search from "./pages/Search";
 import useGetCurrentUser from "./hooks/useGetCurrentUser";
 import { setSocket, setOnlineUsers } from "./redux/socket.Slice";
 import { setPostLikes, setPostComments } from "./redux/post.Slice";
@@ -118,6 +119,10 @@ function App() {
       <Route
         path="/messageArea"
         element={userData ? <MessageArea /> : <Navigate to="/signin" />}
+      />
+      <Route
+        path="/search"
+        element={userData ? <Search /> : <Navigate to="/signin" />}
       />
 
       <Route path="*" element={<Navigate to="/" />} />

@@ -57,7 +57,7 @@ function ReelShareModal({ reel, onClose }) {
         type: "reel_share",
         reelId: reel._id,
         media: reel.media,
-        mediaType: reel.mediaType || "video",
+        mediaType: reel.mediaType || "image",
         authorUsername: reel.author?.username || reel.author?.userName || "user",
         authorImage: reel.author?.profileImage || "",
       });
@@ -112,7 +112,9 @@ function ReelShareModal({ reel, onClose }) {
 
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-gray-800/80">
-          <h3 className="text-sm font-bold text-white tracking-wide">Share Reel</h3>
+          <h3 className="text-sm font-bold text-white tracking-wide">
+            {reel?.mediaType === "video" ? "Share Reel" : "Share Post"}
+          </h3>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white p-1 cursor-pointer transition rounded-full hover:bg-gray-800"
