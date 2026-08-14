@@ -32,6 +32,7 @@ const userSlice = createSlice({
         }
       } else {
         localStorage.removeItem("vistagram_user");
+        localStorage.removeItem("vistagram_token");
       }
     },
     setLoading: (state, action) => {
@@ -43,6 +44,7 @@ const userSlice = createSlice({
     clearUserData: (state) => {
       state.userData = null;
       localStorage.removeItem("vistagram_user");
+      localStorage.removeItem("vistagram_token");
     },
     setSuggestedUsers: (state, action) => {
       state.suggestedUsers = action.payload;

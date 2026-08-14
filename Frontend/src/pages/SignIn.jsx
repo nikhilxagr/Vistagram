@@ -31,6 +31,9 @@ function SignIn() {
         { withCredentials: true }
       );
 
+      if (response.data?.token) {
+        localStorage.setItem("vistagram_token", response.data.token);
+      }
       if (response.data?.user) {
         dispatch(setUserData(response.data.user));
       }

@@ -35,6 +35,9 @@ function SignUp() {
         },
         { withCredentials: true }
       );
+      if (result.data?.token) {
+        localStorage.setItem("vistagram_token", result.data.token);
+      }
       if (result.data?.user) {
         dispatch(setUserData(result.data.user));
       }

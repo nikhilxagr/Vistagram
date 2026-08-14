@@ -5,6 +5,16 @@ import App from './App.jsx'
 import { BrowserRouter } from 'react-router-dom'
 import { Provider } from 'react-redux';
 import store  from "./redux/store.js";
+import axios from 'axios';
+
+axios.interceptors.request.use((config) => {
+  const token = localStorage.getItem("vistagram_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  config.withCredentials = true;
+  return config;
+});
 
 
 createRoot(document.getElementById('root')).render(

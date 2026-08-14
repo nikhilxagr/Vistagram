@@ -1,10 +1,11 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { io } from "socket.io-client";
 import { ClipLoader } from "react-spinners";
 import axios from "axios";
 
+import SplashScreen from "./components/SplashScreen";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -29,6 +30,21 @@ export const serverUrl = import.meta.env.VITE_SERVER_URL || "http://localhost:80
 function App() {
   useGetCurrentUser();
   const dispatch = useDispatch();
+
+  const [showSplash, setShowSplash] = useState(() => {
+    try {
+      return !sessionStorage.getItem("vistagram_splash_shown");
+    } catch {
+      return false;
+    }
+  });
+
+  const handleSplashFinish = () => {
+    try {
+      sessionStorage.setItem("vistagram_splash_shown", "true");
+    } catch {}
+    setShowSplash(false);
+  };
 
   const { userData, loading } = useSelector((state) => state.user);
   const socket = useSelector((state) => state.socket?.socket);
@@ -82,21 +98,16 @@ function App() {
       .catch(() => {});
   }, [userData?._id, dispatch]);
 
-  if (loading) {
-    return (
-      <div className="w-full h-screen bg-black flex flex-col items-center justify-center gap-4 text-white">
-        <ClipLoader size={40} color="#ffffff" />
-        <p className="text-sm font-medium tracking-wide">Loading Vistagram...</p>
-      </div>
-    );
-  }
-
   return (
-    <Routes>
-      <Route
-        path="/"
-        element={userData ? <Home /> : <Navigate to="/signin" />}
-      />
+    <>
+      {showSplash && (
+        <SplashScreen onFinish={handleSplashFinish} />
+      )}
+      <Routes>
+        <Route
+          path="/"
+          element={userData ? <Home /> : <Navigate to="/signin" />}
+        />
       <Route
         path="/profile/:userName"
         element={userData ? <Profile /> : <Navigate to="/signin" />}
@@ -152,6 +163,7 @@ function App() {
 
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
+    </>
   );
 }
 

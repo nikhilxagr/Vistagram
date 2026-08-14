@@ -35,7 +35,7 @@ export const signup = async (req, res) => {
       username,
     });
     const token = await genToken(user._id);
-    const isProduction = process.env.NODE_ENV === "production";
+    const isProduction = process.env.NODE_ENV === "production" || Boolean(process.env.RENDER) || Boolean(process.env.CLIENT_URL);
     res.cookie("token", token, {
       httpOnly: true,
       secure: isProduction,
@@ -43,7 +43,7 @@ export const signup = async (req, res) => {
       path: "/",
       maxAge: 10 * 365 * 24 * 60 * 60 * 1000, // 10 years
     });
-    res.status(201).json({ message: "User created successfully", user });
+    res.status(201).json({ message: "User created successfully", user, token });
   } catch (error) {
     console.error("Error in signup controller:", error);
     res.status(500).json({ message: "Signup failed" });
@@ -69,7 +69,7 @@ export const signin = async (req, res) => {
     }
 
     const token = await genToken(user._id);
-    const isProduction = process.env.NODE_ENV === "production";
+    const isProduction = process.env.NODE_ENV === "production" || Boolean(process.env.RENDER) || Boolean(process.env.CLIENT_URL);
     res.cookie("token", token, {
       httpOnly: true,
       secure: isProduction,
@@ -77,7 +77,7 @@ export const signin = async (req, res) => {
       path: "/",
       maxAge: 10 * 365 * 24 * 60 * 60 * 1000, // 10 years
     });
-    res.status(200).json({ message: "Signin successful", user });
+    res.status(200).json({ message: "Signin successful", user, token });
   } catch (error) {
     console.error("Error in signin controller:", error);
     res.status(500).json({ message: "Signin failed" });
@@ -86,7 +86,7 @@ export const signin = async (req, res) => {
 
 export const signOut = async (req, res) => {
   try {
-    const isProduction = process.env.NODE_ENV === "production";
+    const isProduction = process.env.NODE_ENV === "production" || Boolean(process.env.RENDER) || Boolean(process.env.CLIENT_URL);
     res.clearCookie("token", {
       httpOnly: true,
       secure: isProduction,
