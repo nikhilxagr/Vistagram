@@ -35,6 +35,7 @@ function Story() {
   const storyVideoRef = useRef(null);
 
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -191,7 +192,8 @@ function Story() {
       !currentStoryList ||
       currentStoryList.length === 0 ||
       showViewersModal ||
-      isPaused
+      isPaused ||
+      isUploading
     )
       return;
 
@@ -206,7 +208,7 @@ function Story() {
     }, 50);
 
     return () => clearInterval(interval);
-  }, [currentStory, activeGroupIdx, currentStoryIdx, currentStoryList, storyGroups.length, showViewersModal, isPaused]);
+  }, [currentStory, activeGroupIdx, currentStoryIdx, currentStoryList, storyGroups.length, showViewersModal, isPaused, isUploading]);
 
   const handleVideoTimeUpdate = () => {
     if (isPaused) return;
@@ -256,9 +258,19 @@ function Story() {
     if (!file) return;
 
     setIsUploading(true);
+    setUploadSuccess(false);
+    setIsPaused(true);
+    if (storyVideoRef.current) {
+      storyVideoRef.current.pause();
+    }
+
+    const isVideo = Boolean(
+      file.type?.startsWith("video/") ||
+      file.name?.match(/\.(mp4|mov|webm|mkv|3gp|avi|m4v)$/i)
+    );
+
     const formData = new FormData();
     formData.append("media", file);
-    const isVideo = file.type.startsWith("video/");
     formData.append("mediaType", isVideo ? "video" : "image");
 
     try {
@@ -277,6 +289,8 @@ function Story() {
             })
           );
         }
+        setUploadSuccess(true);
+        await new Promise((resolve) => setTimeout(resolve, 800));
         setProgress(0);
         setActiveGroupIdx(0);
         setCurrentStoryIdx(0);
@@ -285,6 +299,8 @@ function Story() {
       console.error("Error uploading story from Story page:", error);
     } finally {
       setIsUploading(false);
+      setUploadSuccess(false);
+      setIsPaused(false);
       e.target.value = "";
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -463,14 +479,20 @@ function Story() {
               onTouchEnd={handlePressEnd}
               className="w-full h-full flex items-center justify-center relative select-none cursor-pointer overflow-hidden bg-black"
             >
-              {currentStory.mediaType === "video" ? (
+              {currentStory.mediaType === "video" ||
+              currentStory.media?.match(/\.(mp4|mov|webm|mkv|3gp|avi|m4v)(\?.*)?$/i) ||
+              currentStory.media?.includes("/video/upload/") ? (
                 <video
                   ref={storyVideoRef}
+                  key={currentStory._id || currentStory.media}
                   src={currentStory.media}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                   autoPlay
                   playsInline
                   muted={isMuted}
+                  onLoadedMetadata={(e) => {
+                    e.target.play().catch(() => {});
+                  }}
                   onTimeUpdate={handleVideoTimeUpdate}
                   onEnded={handleVideoEnded}
                 />
@@ -650,6 +672,40 @@ function Story() {
               onChange={handleFileSelect}
             />
           </label>
+        </div>
+      )}
+
+      {isUploading && (
+        <div className="fixed inset-0 z-[300] bg-black/85 backdrop-blur-md flex flex-col items-center justify-center gap-4 text-white p-6 animate-in fade-in duration-200 select-none">
+          <div className="relative flex items-center justify-center">
+            <div className="w-24 h-24 rounded-full border-4 border-transparent border-t-pink-500 border-r-purple-500 border-b-yellow-500 animate-spin" />
+            <div className="w-20 h-20 rounded-full overflow-hidden absolute border-2 border-black bg-gray-900 shadow-2xl">
+              <img
+                src={userData?.profileImage || dp}
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center text-center gap-1.5 mt-2">
+            <h3 className="text-base font-bold text-white tracking-wide flex items-center gap-2">
+              {uploadSuccess ? "Story Added! 🎉" : "Adding to your story..."}
+            </h3>
+            <p className="text-xs text-gray-400 font-medium">
+              {uploadSuccess
+                ? "Your story is now live"
+                : "Uploading media to your story"}
+            </p>
+          </div>
+
+          <div className="w-48 h-1.5 bg-gray-800 rounded-full overflow-hidden mt-1">
+            <div
+              className={`h-full bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 rounded-full transition-all duration-300 ${
+                uploadSuccess ? "w-full" : "w-2/3 animate-pulse"
+              }`}
+            />
+          </div>
         </div>
       )}
     </div>

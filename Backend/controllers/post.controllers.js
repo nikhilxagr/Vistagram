@@ -281,3 +281,103 @@ export const saved = async (req, res) => {
     return res.status(500).json({ message: "Error saving post", error: error.message });
   }
 };
+
+export const deleteComment = async (req, res) => {
+  try {
+    const postId = req.params.postId || req.params.id;
+    const commentId = req.params.commentId;
+    const userId = req.userId || req.user?._id;
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    const comment = post.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    const isCommentAuthor = (comment.author?._id || comment.author)?.toString() === userId.toString();
+    const isPostAuthor = (post.author?._id || post.author)?.toString() === userId.toString();
+
+    if (!isCommentAuthor && !isPostAuthor) {
+      return res.status(403).json({ message: "Unauthorized to delete this comment" });
+    }
+
+    post.comments.pull(commentId);
+    await post.save();
+
+    const updatedPost = await Post.findById(postId).populate({
+      path: "comments.author",
+      select: "name username profileImage",
+    });
+
+    if (io) {
+      io.emit("commentDeleted", {
+        postId: postId.toString(),
+        commentId: commentId.toString(),
+        comments: updatedPost.comments,
+      });
+    }
+
+    return res.status(200).json({
+      message: "Comment deleted successfully",
+      comments: updatedPost.comments,
+    });
+  } catch (error) {
+    console.error("Error deleting comment:", error);
+    return res.status(500).json({ message: "Error deleting comment", error: error.message });
+  }
+};
+
+export const likeComment = async (req, res) => {
+  try {
+    const postId = req.params.postId || req.params.id;
+    const commentId = req.params.commentId;
+    const userId = req.userId || req.user?._id;
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    const comment = post.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    comment.likes = comment.likes || [];
+    const alreadyLiked = comment.likes.some((id) => id.toString() === userId.toString());
+
+    if (alreadyLiked) {
+      comment.likes = comment.likes.filter((id) => id.toString() !== userId.toString());
+    } else {
+      comment.likes.push(userId);
+    }
+
+    await post.save();
+
+    const updatedPost = await Post.findById(postId).populate({
+      path: "comments.author",
+      select: "name username profileImage",
+    });
+
+    if (io) {
+      io.emit("commentLiked", {
+        postId: postId.toString(),
+        commentId: commentId.toString(),
+        likes: comment.likes,
+        comments: updatedPost.comments,
+      });
+    }
+
+    return res.status(200).json({
+      message: alreadyLiked ? "Comment unliked" : "Comment liked",
+      comments: updatedPost.comments,
+    });
+  } catch (error) {
+    console.error("Error liking comment:", error);
+    return res.status(500).json({ message: "Error liking comment", error: error.message });
+  }
+};

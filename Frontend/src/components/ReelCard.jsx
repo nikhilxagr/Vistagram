@@ -5,7 +5,8 @@ import axios from "axios";
 import { serverUrl } from "../App";
 import dp from "../assets/dp.png";
 import { FaHeart, FaRegHeart, FaRegComment, FaBookmark, FaRegBookmark } from "react-icons/fa6";
-import { FiSend, FiVolume2, FiVolumeX, FiPlay, FiPause, FiX, FiArrowLeft, FiMusic } from "react-icons/fi";
+import { FiSend, FiVolume2, FiVolumeX, FiPlay, FiPause, FiX, FiArrowLeft, FiMusic, FiTrash2 } from "react-icons/fi";
+import { ClipLoader } from "react-spinners";
 import { toggleLikeReel, addCommentToReel } from "../redux/reel.Slice";
 import { setUserData } from "../redux/userSlice";
 import ReelShareModal from "./ReelShareModal";
@@ -42,6 +43,9 @@ function ReelCard({ reel }) {
   const [commentInput, setCommentInput] = useState("");
   const [commentsList, setCommentsList] = useState(reel?.comments || []);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [selectedCommentToDelete, setSelectedCommentToDelete] = useState(null);
+  const [isDeletingComment, setIsDeletingComment] = useState(false);
+  const commentPressTimerRef = useRef(null);
 
   const checkIfFollowing = () => {
     if (!userData?.following || !authorId) return false;
@@ -299,6 +303,84 @@ function ReelCard({ reel }) {
     }
   };
 
+  const handleCommentPressStart = (c) => {
+    const commentAuthorId = (c.author?._id || c.author || "").toString();
+    const isCommentAuthor = currentUserId && commentAuthorId === currentUserId.toString();
+    const isReelAuthor = currentUserId && authorId === currentUserId.toString();
+
+    if (!isCommentAuthor && !isReelAuthor) return;
+
+    commentPressTimerRef.current = setTimeout(() => {
+      setSelectedCommentToDelete(c);
+    }, 500);
+  };
+
+  const handleCommentPressEnd = () => {
+    if (commentPressTimerRef.current) {
+      clearTimeout(commentPressTimerRef.current);
+      commentPressTimerRef.current = null;
+    }
+  };
+
+  const handleDeleteComment = async () => {
+    if (!selectedCommentToDelete || !reel?._id || isDeletingComment) return;
+    const commentId = selectedCommentToDelete._id;
+    setIsDeletingComment(true);
+
+    try {
+      const res = await axios.delete(
+        `${serverUrl}/api/posts/${reel._id}/comment/${commentId}`,
+        { withCredentials: true }
+      );
+
+      if (res.data?.comments) {
+        setCommentsList(res.data.comments);
+      } else {
+        setCommentsList((prev) => prev.filter((c) => (c._id || c.id) !== commentId));
+      }
+      setSelectedCommentToDelete(null);
+    } catch (err) {
+      console.error("Error deleting reel comment:", err);
+      setCommentsList((prev) => prev.filter((c) => (c._id || c.id) !== commentId));
+      setSelectedCommentToDelete(null);
+    } finally {
+      setIsDeletingComment(false);
+    }
+  };
+
+  const handleLikeComment = async (commentId) => {
+    if (!currentUserId || !reel?._id || !commentId) return;
+
+    setCommentsList((prev) =>
+      prev.map((c) => {
+        if ((c._id || c.id) === commentId) {
+          const likes = Array.isArray(c.likes) ? [...c.likes] : [];
+          const alreadyLiked = likes.some(
+            (id) => (id._id || id || "").toString() === currentUserId.toString()
+          );
+          const updatedLikes = alreadyLiked
+            ? likes.filter((id) => (id._id || id || "").toString() !== currentUserId.toString())
+            : [...likes, currentUserId];
+          return { ...c, likes: updatedLikes };
+        }
+        return c;
+      })
+    );
+
+    try {
+      const res = await axios.put(
+        `${serverUrl}/api/posts/${reel._id}/comment/${commentId}/like`,
+        {},
+        { withCredentials: true }
+      );
+      if (res.data?.comments) {
+        setCommentsList(res.data.comments);
+      }
+    } catch (err) {
+      console.error("Error liking reel comment:", err);
+    }
+  };
+
   return (
     <div className="w-full h-full relative snap-start snap-always flex items-center justify-center bg-black overflow-hidden select-none group">
       <video
@@ -484,13 +566,16 @@ function ReelCard({ reel }) {
             </div>
 
             {/* Comments List */}
-            <div className="flex-1 overflow-y-auto flex flex-col gap-3.5 pr-1 py-1 no-scrollbar">
+            <div className="flex-1 overflow-y-auto flex flex-col gap-2.5 pr-1 py-1 no-scrollbar">
               {commentsList.length > 0 ? (
                 commentsList.map((c, idx) => {
                   const commentUser =
                     typeof c.author === "object" && c.author !== null ? c.author : {};
                   const isCurrentLoggedUser =
                     (c.author?._id || c.author || "").toString() === (currentUserId || "").toString();
+                  const isReelAuthor =
+                    (authorId || "").toString() === (currentUserId || "").toString();
+                  const canDelete = isCurrentLoggedUser || isReelAuthor;
 
                   const cUsername =
                     commentUser.username ||
@@ -503,25 +588,74 @@ function ReelCard({ reel }) {
                     (isCurrentLoggedUser ? userData?.profileImage : null) ||
                     dp;
 
+                  const isCommentLiked = Array.isArray(c.likes) && c.likes.some(
+                    (id) => (id._id || id || "").toString() === (currentUserId || "").toString()
+                  );
+                  const commentLikesCount = Array.isArray(c.likes) ? c.likes.length : 0;
+
                   return (
-                    <div key={c._id || idx} className="flex items-start gap-3 text-xs text-gray-200">
-                      <div
-                        onClick={() => navigate(`/profile/${cUsername}`)}
-                        className="w-8 h-8 rounded-full overflow-hidden border border-gray-700 bg-gray-900 flex-shrink-0 cursor-pointer"
-                      >
-                        <img src={cImage} alt={cUsername} className="w-full h-full object-cover" />
-                      </div>
-                      <div className="flex flex-col text-left flex-1">
-                        <div className="flex items-baseline gap-2">
+                    <div
+                      key={c._id || idx}
+                      onTouchStart={() => handleCommentPressStart(c)}
+                      onTouchEnd={handleCommentPressEnd}
+                      onMouseDown={() => handleCommentPressStart(c)}
+                      onMouseUp={handleCommentPressEnd}
+                      onMouseLeave={handleCommentPressEnd}
+                      className="group/comment flex items-start justify-between gap-3 text-xs text-gray-200 p-1.5 rounded-xl hover:bg-gray-900/50 transition select-none"
+                    >
+                      <div className="flex items-start gap-2.5 flex-1 min-w-0">
+                        <div
+                          onClick={() => navigate(`/profile/${cUsername}`)}
+                          className="w-8 h-8 rounded-full overflow-hidden border border-gray-700 bg-gray-900 flex-shrink-0 cursor-pointer"
+                        >
+                          <img src={cImage} alt={cUsername} className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex flex-col text-left flex-1 min-w-0">
                           <span
                             onClick={() => navigate(`/profile/${cUsername}`)}
-                            className="font-bold text-white cursor-pointer hover:underline"
+                            className="font-bold text-white cursor-pointer hover:underline text-[12px]"
                           >
                             {cUsername}
                           </span>
-                          <span className="text-[10px] text-gray-500">Just now</span>
+                          <span className="text-gray-200 mt-0.5 break-words text-xs leading-relaxed">{c.message}</span>
                         </div>
-                        <span className="text-gray-300 mt-1 break-words leading-relaxed">{c.message}</span>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-shrink-0 pt-0.5">
+                        {canDelete && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedCommentToDelete(c);
+                            }}
+                            className="opacity-0 group-hover/comment:opacity-100 text-gray-500 hover:text-red-400 p-1 transition cursor-pointer"
+                            title="Delete comment"
+                          >
+                            <FiTrash2 size={13} />
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLikeComment(c._id);
+                          }}
+                          className="flex flex-col items-center cursor-pointer text-gray-400 hover:text-red-500 transition p-1"
+                          title="Like comment"
+                        >
+                          {isCommentLiked ? (
+                            <FaHeart className="text-red-500 text-[13px] animate-in zoom-in-50 duration-150" />
+                          ) : (
+                            <FaRegHeart className="text-gray-400 hover:text-white text-[13px]" />
+                          )}
+                          {commentLikesCount > 0 && (
+                            <span className="text-[9px] text-gray-400 font-semibold leading-none mt-0.5">
+                              {commentLikesCount}
+                            </span>
+                          )}
+                        </button>
                       </div>
                     </div>
                   );
@@ -554,6 +688,47 @@ function ReelCard({ reel }) {
                 Post
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Comment Confirmation Modal */}
+      {selectedCommentToDelete && (
+        <div
+          className="fixed inset-0 z-[250] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150"
+          onClick={() => setSelectedCommentToDelete(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-xs bg-gray-950 border border-gray-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col text-center animate-in zoom-in-95 duration-150"
+          >
+            <div className="p-5 flex flex-col items-center gap-2">
+              <div className="w-10 h-10 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mb-1">
+                <FiTrash2 size={20} />
+              </div>
+              <h3 className="text-sm font-bold text-white">Delete Comment?</h3>
+              <p className="text-xs text-gray-400 leading-relaxed px-2">
+                Are you sure you want to delete this comment? This cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex flex-col border-t border-gray-900 divide-y divide-gray-900">
+              <button
+                type="button"
+                onClick={handleDeleteComment}
+                disabled={isDeletingComment}
+                className="w-full py-3 text-xs font-bold text-red-500 hover:bg-red-500/10 transition cursor-pointer flex items-center justify-center gap-2"
+              >
+                {isDeletingComment ? <ClipLoader size={14} color="#ef4444" /> : "Delete"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedCommentToDelete(null)}
+                className="w-full py-3 text-xs font-semibold text-gray-300 hover:bg-gray-900 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

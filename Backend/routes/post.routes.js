@@ -10,6 +10,8 @@ import {
   likePost,
   comments,
   saved,
+  deleteComment,
+  likeComment,
 } from "../controllers/post.controllers.js";
 
 const postRouter = express.Router();
@@ -24,6 +26,8 @@ postRouter.put("/:id/edit", isAuth, editPost);
 postRouter.put("/:id/like", isAuth, likePost);
 postRouter.put("/:id/save", isAuth, saved);
 postRouter.post("/:id/comment", isAuth, comments);
+postRouter.delete("/:postId/comment/:commentId", isAuth, deleteComment);
+postRouter.put("/:postId/comment/:commentId/like", isAuth, likeComment);
 
 //  last
 postRouter.put("/:id", isAuth, editPost);

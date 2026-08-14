@@ -21,7 +21,11 @@ export const uploadStory = async (req, res) => {
       return res.status(400).json({ message: "Media file is required" });
     }
 
-    const isVideo = req.file.mimetype?.startsWith("video/") || mediaType === "video";
+    const isVideo = Boolean(
+      req.file?.mimetype?.startsWith("video/") ||
+      req.file?.originalname?.match(/\.(mp4|mov|webm|mkv|3gp|avi|m4v)$/i) ||
+      mediaType === "video"
+    );
 
     const story = await Story.create({
       media: mediaUrl,
