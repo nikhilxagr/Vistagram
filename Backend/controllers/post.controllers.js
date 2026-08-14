@@ -11,18 +11,8 @@ export const uploadPost = async (req, res) => {
     let mediaUrl;
 
     if (req.file) {
-      try {
-        const uploaded = await uploadOnCloudinary(req.file.path);
-        mediaUrl = typeof uploaded === "string" ? uploaded : uploaded?.secure_url;
-      } catch (err) {
-        console.error("Cloudinary failed, using local base64 fallback:", err);
-        const fileData = fs.readFileSync(req.file.path);
-        const mimeType = req.file.mimetype || "image/png";
-        mediaUrl = `data:${mimeType};base64,${fileData.toString("base64")}`;
-        if (fs.existsSync(req.file.path)) {
-          fs.unlinkSync(req.file.path);
-        }
-      }
+      const uploaded = await uploadOnCloudinary(req.file.path);
+      mediaUrl = typeof uploaded === "string" ? uploaded : uploaded?.secure_url;
     } else {
       return res.status(400).json({ message: "Media file is required" });
     }

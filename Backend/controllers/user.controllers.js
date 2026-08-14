@@ -66,25 +66,11 @@ export const editProfile = async (req, res) => {
     }
 
     if (req.file) {
-      try {
-        const uploadedUrl = await uploadOnCloudinary(req.file.path);
-        if (typeof uploadedUrl === "string") {
-          user.profileImage = uploadedUrl;
-        } else if (uploadedUrl?.secure_url) {
-          user.profileImage = uploadedUrl.secure_url;
-        }
-      } catch (uploadError) {
-        console.error("Cloudinary upload error, using local base64 fallback:", uploadError.message);
-        try {
-          const fileData = fs.readFileSync(req.file.path);
-          const mimeType = req.file.mimetype || "image/png";
-          user.profileImage = `data:${mimeType};base64,${fileData.toString("base64")}`;
-          if (fs.existsSync(req.file.path)) {
-            fs.unlinkSync(req.file.path);
-          }
-        } catch (fsErr) {
-          console.error("Local file fallback error:", fsErr);
-        }
+      const uploadedUrl = await uploadOnCloudinary(req.file.path);
+      if (typeof uploadedUrl === "string") {
+        user.profileImage = uploadedUrl;
+      } else if (uploadedUrl?.secure_url) {
+        user.profileImage = uploadedUrl.secure_url;
       }
     }
 
