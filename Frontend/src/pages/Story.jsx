@@ -277,6 +277,7 @@ function Story() {
             })
           );
         }
+        setProgress(0);
         setActiveGroupIdx(0);
         setCurrentStoryIdx(0);
       }
@@ -284,6 +285,7 @@ function Story() {
       console.error("Error uploading story from Story page:", error);
     } finally {
       setIsUploading(false);
+      e.target.value = "";
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -406,11 +408,12 @@ function Story() {
               </div>
 
               <div className="flex items-center gap-1.5 flex-shrink-0">
-                {(isOwnStory || storyGroups.length === 0) && (
-                  <button
-                    onClick={handleUploadClick}
-                    disabled={isUploading}
-                    className="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1 shadow-lg transition cursor-pointer disabled:opacity-50"
+                {currentUserId && (
+                  <label
+                    onClick={(e) => e.stopPropagation()}
+                    className={`bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1 shadow-lg transition cursor-pointer ${
+                      isUploading ? "opacity-60 pointer-events-none" : ""
+                    }`}
                   >
                     {isUploading ? (
                       <ClipLoader size={12} color="#ffffff" />
@@ -421,7 +424,14 @@ function Story() {
                         <span className="sm:hidden">Add</span>
                       </>
                     )}
-                  </button>
+                    <input
+                      type="file"
+                      accept="image/*,video/*"
+                      className="hidden"
+                      disabled={isUploading}
+                      onChange={handleFileSelect}
+                    />
+                  </label>
                 )}
 
                 {/* Sound Mute / Unmute Toggle */}
@@ -621,14 +631,25 @@ function Story() {
           <p className="text-xs text-gray-400 mb-6">
             Share a story with your followers on Vistagram!
           </p>
-          <button
-            onClick={handleUploadClick}
-            disabled={isUploading}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-white text-black font-bold text-xs hover:bg-gray-200 transition shadow-lg cursor-pointer disabled:opacity-50"
+          <label
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-full bg-white text-black font-bold text-xs hover:bg-gray-200 transition shadow-lg cursor-pointer ${
+              isUploading ? "opacity-50 pointer-events-none" : ""
+            }`}
           >
-            <FiPlus size={16} className="stroke-[3]" />
-            Upload Story
-          </button>
+            {isUploading ? (
+              <ClipLoader size={16} color="#000000" />
+            ) : (
+              <FiPlus size={16} className="stroke-[3]" />
+            )}
+            <span>{isUploading ? "Uploading..." : "Upload Story"}</span>
+            <input
+              type="file"
+              accept="image/*,video/*"
+              className="hidden"
+              disabled={isUploading}
+              onChange={handleFileSelect}
+            />
+          </label>
         </div>
       )}
     </div>

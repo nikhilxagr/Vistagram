@@ -50,6 +50,22 @@ function Reels() {
     return () => clearTimeout(timer);
   }, [allReelVideos, location.state]);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!containerRef.current) return;
+      if (e.key === "ArrowDown" || e.key === "PageDown") {
+        e.preventDefault();
+        containerRef.current.scrollBy({ top: window.innerHeight, behavior: "smooth" });
+      } else if (e.key === "ArrowUp" || e.key === "PageUp") {
+        e.preventDefault();
+        containerRef.current.scrollBy({ top: -window.innerHeight, behavior: "smooth" });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const isLoading = (reelsLoading || postsLoading) && allReelVideos.length === 0;
 
   return (
@@ -57,7 +73,7 @@ function Reels() {
       <div className="absolute top-5 left-5 z-50 flex items-center gap-3">
         <button
           onClick={() => navigate(-1)}
-          className="bg-black/50 backdrop-blur-md text-white p-2.5 rounded-full border border-gray-800 hover:bg-gray-900 transition cursor-pointer"
+          className="bg-black/50 backdrop-blur-md text-white p-2.5 rounded-full border border-gray-800 hover:bg-gray-900 transition cursor-pointer shadow-lg"
           aria-label="Go Back"
         >
           <FiArrowLeft size={18} />
@@ -75,13 +91,18 @@ function Reels() {
       ) : allReelVideos && allReelVideos.length > 0 ? (
         <div
           ref={containerRef}
-          className="w-full max-w-md h-full overflow-y-scroll snap-y snap-mandatory no-scrollbar relative"
+          className="w-full max-w-md h-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar relative"
+          style={{
+            scrollSnapType: "y mandatory",
+            WebkitOverflowScrolling: "touch",
+            overscrollBehaviorY: "contain",
+          }}
         >
           {allReelVideos.map((reel) => (
             <div
               id={`reel-${reel._id}`}
               key={reel._id}
-              className="w-full h-full snap-start flex-shrink-0"
+              className="w-full h-full snap-start snap-always flex-shrink-0 flex items-center justify-center bg-black"
             >
               <ReelCard reel={reel} />
             </div>

@@ -21,8 +21,6 @@ function MessageArea() {
   const onlineUsers = useSelector((state) => state.socket?.onlineUsers || []);
 
   const [textMessage, setTextMessage] = useState("");
-  const [frontendImage, setFrontendImage] = useState(null);
-  const [backendImage, setBackendImage] = useState(null);
   const [isSending, setIsSending] = useState(false);
 
   const messagesEndRef = useRef(null);
@@ -76,32 +74,52 @@ function MessageArea() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleImageChange = (e) => {
+  // Direct image send without preview
+  const handleImageChange = async (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setBackendImage(file);
-      setFrontendImage(URL.createObjectURL(file));
+    if (!file || !targetUserId || isSending) return;
+
+    // Reset input value so same image can be sent again
+    e.target.value = "";
+
+    setIsSending(true);
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      const res = await axios.post(
+        `${serverUrl}/api/messages/send/${targetUserId}`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          withCredentials: true,
+        }
+      );
+
+      if (res.data?.data) {
+        dispatch(setMessages([...(messages || []), res.data.data]));
+      } else {
+        getAllMessages();
+      }
+    } catch (err) {
+      console.error("Error sending image:", err);
+    } finally {
+      setIsSending(false);
     }
   };
 
   const handleSendMessage = async (e) => {
     if (e) e.preventDefault();
-    if ((!textMessage.trim() && !backendImage) || isSending || !targetUserId) return;
+    if (!textMessage.trim() || isSending || !targetUserId) return;
 
     setIsSending(true);
 
     const formData = new FormData();
-    if (textMessage.trim()) {
-      formData.append("message", textMessage.trim());
-    }
-    if (backendImage) {
-      formData.append("image", backendImage);
-    }
+    formData.append("message", textMessage.trim());
 
     const tempText = textMessage;
     setTextMessage("");
-    setFrontendImage(null);
-    setBackendImage(null);
 
     try {
       const res = await axios.post(
@@ -186,26 +204,6 @@ function MessageArea() {
           </div>
         </div>
       </div>
-      {frontendImage && (
-        <div className="w-full h-44 bg-gray-950 border-b border-gray-900 flex items-center justify-center overflow-hidden relative p-2">
-          <img
-            src={frontendImage}
-            alt="Attachment Preview"
-            className="w-full h-full object-contain rounded-lg"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              setFrontendImage(null);
-              setBackendImage(null);
-            }}
-            className="absolute top-3 right-3 bg-black/80 text-white rounded-full p-1.5 hover:bg-black transition cursor-pointer"
-            aria-label="Remove image"
-          >
-            <FiX size={14} />
-          </button>
-        </div>
-      )}
 
       {/* Middle Chat Messages Body */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2 bg-black">
@@ -249,21 +247,26 @@ function MessageArea() {
           />
 
           <label className="cursor-pointer text-gray-400 hover:text-white transition p-1.5 rounded-full hover:bg-gray-800/60 flex items-center justify-center">
-            <FiImage size={21} />
+            {isSending ? (
+              <ClipLoader size={18} color="#a855f7" />
+            ) : (
+              <FiImage size={21} />
+            )}
             <input
               type="file"
               accept="image/*"
               className="hidden"
+              disabled={isSending}
               onChange={handleImageChange}
             />
           </label>
 
           <button
             type="submit"
-            disabled={(!textMessage.trim() && !backendImage) || isSending}
+            disabled={!textMessage.trim() || isSending}
             className="w-9 h-9 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 hover:opacity-90 transition flex items-center justify-center text-white shadow-md cursor-pointer flex-shrink-0 disabled:opacity-40"
           >
-            {isSending ? (
+            {isSending && textMessage.trim() ? (
               <ClipLoader size={14} color="#ffffff" />
             ) : (
               <FiSend size={16} className="-rotate-12 ml-0.5" />

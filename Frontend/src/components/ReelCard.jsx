@@ -301,11 +301,10 @@ function ReelCard({ reel }) {
 
   return (
     <div className="w-full h-full relative snap-start snap-always flex items-center justify-center bg-black overflow-hidden select-none group">
-      {/* Video Stream Element */}
       <video
         ref={videoRef}
         src={reel?.media}
-        className="w-full h-full object-cover cursor-pointer"
+        className="w-full h-full object-contain cursor-pointer relative z-0"
         loop
         playsInline
         onTimeUpdate={handleTimeUpdate}
@@ -319,22 +318,6 @@ function ReelCard({ reel }) {
           <FaHeart className="text-red-500 text-8xl drop-shadow-2xl animate-bounce" />
         </div>
       )}
-
-      <div className="absolute top-5 left-5 z-20 flex items-center gap-3">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(-1);
-          }}
-          className="bg-black/50 backdrop-blur-md text-white p-2.5 rounded-full border border-white/10 hover:bg-black/70 transition cursor-pointer"
-          aria-label="Go Back"
-        >
-          <FiArrowLeft size={18} />
-        </button>
-        <span className="text-xl font-bold text-white drop-shadow-lg tracking-wide select-none">
-          Reels
-        </span>
-      </div>
 
       <div
         onClick={handleSingleOrDoubleClick}
