@@ -14,7 +14,7 @@ dotenv.config();
 
 app.set("trust proxy", 1);
 
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 10000;
 
 const clientUrl = process.env.CLIENT_URL ? process.env.CLIENT_URL.trim().replace(/\/$/, "") : "";
 

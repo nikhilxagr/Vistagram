@@ -10,12 +10,20 @@ const getMongoDnsServers = () => {
     return configuredServers;
   }
 
-  const currentServers = dns.getServers();
-  const usesLocalDnsProxy = currentServers.some((server) =>
-    ["127.0.0.1", "::1"].includes(server),
-  );
+  // Only apply local fallback DNS in non-production environments
+  if (process.env.NODE_ENV !== "production") {
+    try {
+      const currentServers = dns.getServers();
+      const usesLocalDnsProxy = currentServers.some((server) =>
+        ["127.0.0.1", "::1"].includes(server),
+      );
+      return usesLocalDnsProxy ? ["8.8.8.8", "1.1.1.1"] : [];
+    } catch {
+      return [];
+    }
+  }
 
-  return usesLocalDnsProxy ? ["8.8.8.8", "1.1.1.1"] : [];
+  return [];
 };
 
 const connectDB = async () => {
