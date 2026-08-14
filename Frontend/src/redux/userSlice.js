@@ -15,7 +15,7 @@ const userSlice = createSlice({
   name: 'user',
   initialState: {
     userData: initialUser,
-    loading: initialUser ? false : true,
+    loading: false,
     error: null,
     suggestedUsers: null,
     profileData: null,
