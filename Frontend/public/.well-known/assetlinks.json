@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.vercel.myvistagram.twa",
+        "sha256_cert_fingerprints": ["A6:37:97:50:7A:BA:09:13:3C:EB:44:81:D3:74:D1:EE:7F:07:D3:69:A4:D3:30:1E:8A:9B:5A:5F:5B:F9:76:7C"]
+      }
+    }]
