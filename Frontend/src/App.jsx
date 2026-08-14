@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { io } from "socket.io-client";
 import { ClipLoader } from "react-spinners";
+import axios from "axios";
 
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
@@ -16,9 +17,12 @@ import Story from "./pages/Story";
 import Messages from "./pages/Messages";
 import MessageArea from "./pages/MessageArea";
 import Search from "./pages/Search";
+import Notifications from "./pages/Notifications";
+import PostDetail from "./pages/PostDetail";
 import useGetCurrentUser from "./hooks/useGetCurrentUser";
 import { setSocket, setOnlineUsers } from "./redux/socket.Slice";
 import { setPostLikes, setPostComments } from "./redux/post.Slice";
+import { addNotification, setNotifications } from "./redux/notification.Slice";
 
 export const serverUrl = import.meta.env.VITE_SERVER_URL || "http://localhost:8000";
 
@@ -53,6 +57,10 @@ function App() {
         dispatch(setPostComments(data));
       });
 
+      socketIo.on("newNotification", (notification) => {
+        dispatch(addNotification(notification));
+      });
+
       return () => {
         socketIo.close();
         dispatch(setSocket(null));
@@ -64,6 +72,15 @@ function App() {
       }
     }
   }, [userData, dispatch]);
+
+  // Fetch notifications on login
+  useEffect(() => {
+    const userId = userData?._id || userData?.id;
+    if (!userId) return;
+    axios.get(`${serverUrl}/api/users/notifications`, { withCredentials: true })
+      .then((res) => dispatch(setNotifications(res.data?.notifications || [])))
+      .catch(() => {});
+  }, [userData?._id, dispatch]);
 
   if (loading) {
     return (
@@ -123,6 +140,14 @@ function App() {
       <Route
         path="/search"
         element={userData ? <Search /> : <Navigate to="/signin" />}
+      />
+      <Route
+        path="/notifications"
+        element={userData ? <Notifications /> : <Navigate to="/signin" />}
+      />
+      <Route
+        path="/post/:postId"
+        element={userData ? <PostDetail /> : <Navigate to="/signin" />}
       />
 
       <Route path="*" element={<Navigate to="/" />} />

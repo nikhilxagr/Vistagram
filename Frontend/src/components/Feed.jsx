@@ -17,6 +17,7 @@ import { serverUrl } from "../App.jsx";
 import { FaRegHeart } from "react-icons/fa";
 import { FiPlus } from "react-icons/fi";
 
+
 function Feed() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -28,6 +29,7 @@ function Feed() {
   const { userData } = useSelector((state) => state.user);
   const { posts, loading: postsLoading } = useSelector((state) => state.post);
   const { stories } = useSelector((state) => state.story);
+  const { unreadCount } = useSelector((state) => state.notification);
 
   const [isUploadingStory, setIsUploadingStory] = useState(false);
   const fileInputRef = useRef(null);
@@ -172,8 +174,17 @@ function Feed() {
           onClick={() => navigate("/")}
         />
 
-        <button className="text-white hover:text-red-500 transition cursor-pointer p-1">
+        <button
+          onClick={() => navigate("/notifications")}
+          className="relative text-white hover:text-red-500 transition cursor-pointer p-1"
+          aria-label="Notifications"
+        >
           <FaRegHeart size={24} />
+          {unreadCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
         </button>
       </div>
 

@@ -2,8 +2,10 @@ import User from "../models/user.model.js";
 import Post from "../models/post.model.js";
 import Reel from "../models/reel.model.js";
 import Story from "../models/story.model.js";
+import Notification from "../models/notification.model.js";
 import uploadOnCloudinary from "../config/cloudinary.js";
 import fs from "fs";
+import { io, getReceiverSocketId } from "../socket.js";
 
 
 export const getCurrentUser = async (req, res) => {
@@ -199,6 +201,26 @@ export const followUser = async (req, res) => {
     } else {
       currentUser.following.push(targetUserId);
       targetUser.followers.push(currentUserId);
+         if (currentUser._id.toString() !== targetUser._id.toString()) {
+           const notification = await Notification.create({
+             sender: currentUser._id,
+             receiver: targetUser._id,
+             type: "follow",
+             message: `${currentUser.name} started following you.`,
+           });
+
+           const populatedNotification = await Notification.findById(
+             notification._id,
+           ).populate("sender receiver", "name username profileImage");
+
+           const receiverSocketId = getReceiverSocketId(targetUser._id.toString());
+           if (receiverSocketId) {
+             io.to(receiverSocketId).emit(
+               "newNotification",
+               populatedNotification,
+             );
+           }
+         }
       await Promise.all([currentUser.save(), targetUser.save()]);
       return res.status(200).json({
         message: "Followed successfully",
@@ -251,12 +273,50 @@ export const search = async (req, res) => {
   }
 };
 
-export default {
-  getCurrentUser,
-  suggestedUsers,
-  editProfile,
-  getProfile,
-  followUser,
-  followingList,
-  search
+export const getAllNotifications = async (req, res) => {
+  try {
+    const userId = req.userId || req.user?._id;
+    const notifications = await Notification.find({ receiver: userId })
+      .populate("sender", "name username profileImage")
+      .populate("post", "media mediaType caption")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({ notifications });
+  } catch (error) {
+    console.error("Error in getAllNotifications:", error);
+    res.status(500).json({ message: "Failed to fetch notifications" });
+  }
+};
+
+export const markAsRead = async (req, res) => {
+  try {
+    const notificationId = req.params.notificationId;
+    const notification = await Notification.findById(notificationId);
+
+    if (!notification) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
+
+    notification.isRead = true;
+    await notification.save();
+    return res.status(200).json({ message: "Notification marked as read" });
+
+  } catch (error) {
+    console.error("Error in markAsRead:", error);
+    res.status(500).json({ message: "Failed to mark notification as read" });
+  }
+};
+
+export const markAllNotificationsRead = async (req, res) => {
+  try {
+    const userId = req.userId || req.user?._id;
+    await Notification.updateMany(
+      { receiver: userId, isRead: false },
+      { $set: { isRead: true } }
+    );
+    return res.status(200).json({ message: "All notifications marked as read" });
+  } catch (error) {
+    console.error("Error in markAllNotificationsRead:", error);
+    res.status(500).json({ message: "Failed to mark all notifications as read" });
+  }
 };

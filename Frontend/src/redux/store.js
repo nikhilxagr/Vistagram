@@ -5,6 +5,7 @@ import reelReducer from "./reel.Slice";
 import storyReducer from "./story.slice";
 import messageReducer from "./message.Slice";
 import socketReducer from "./socket.Slice";
+import notificationReducer from "./notification.Slice";
 
 const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ const store = configureStore({
     story: storyReducer,
     message: messageReducer,
     socket: socketReducer,
+    notification: notificationReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

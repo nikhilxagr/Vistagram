@@ -7,6 +7,9 @@ import {
   followUser,
   followingList,
   search,
+  getAllNotifications,
+  markAsRead,
+  markAllNotificationsRead,
 } from "../controllers/user.controllers.js";
 import isAuth from "../middleware/isAuth.js";
 import upload from "../middleware/multer.js";
@@ -21,5 +24,8 @@ userRouter.put("/follow/:userId", isAuth, followUser);
 userRouter.get("/followingList", isAuth, followingList);
 userRouter.get("/following", isAuth, followingList);
 userRouter.get("/search", isAuth, search);
+userRouter.get("/notifications", isAuth, getAllNotifications);
+userRouter.put("/notifications/markAllRead", isAuth, markAllNotificationsRead);
+userRouter.put("/notifications/:notificationId/markAsRead", isAuth, markAsRead);
 
 export default userRouter;

@@ -1,8 +1,9 @@
 import uploadOnCloudinary from "../config/cloudinary.js";
 import Post from "../models/post.model.js";
 import User from "../models/user.model.js";
+import Notification from "../models/notification.model.js";
 import fs from "fs";
-import { io } from "../socket.js";
+import { getReceiverSocketId, io } from "../socket.js";
 
 export const uploadPost = async (req, res) => {
   try {
@@ -153,6 +154,25 @@ export const likePost = async (req, res) => {
       post.likes = post.likes.filter((id) => id.toString() !== userId.toString());
     } else {
       post.likes.push(userId);
+      if (post.author.toString() !== userId.toString()) {
+        const sender = await User.findById(userId).select("name username");
+       
+        const notification = await Notification.findOneAndUpdate(
+          { sender: userId, receiver: post.author, type: "like", post: post._id },
+          {
+            $set: {
+              isRead: false,
+              message: `${sender?.name || sender?.username || "Someone"} liked your post.`,
+            },
+          },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        ).populate("sender", "name username profileImage")
+          .populate("post", "media mediaType caption");
+        const receiverSocketId = getReceiverSocketId(post.author.toString());
+        if (receiverSocketId) {
+          io.to(receiverSocketId).emit("newNotification", notification);
+        }
+      }
     }
     await post.save();
 
@@ -184,10 +204,25 @@ export const comments = async (req, res) => {
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
-    post.comments.push({
-      author: userId,
-      message,
-    });
+    post.comments.push({ author: userId, message });
+
+    if (post.author.toString() !== userId.toString()) {
+      const sender = await User.findById(userId).select("name username");
+      const notification = await Notification.create({
+        sender: userId,
+        receiver: post.author,
+        type: "comment",
+        post: post._id,
+        message: `${sender?.name || sender?.username || "Someone"} commented on your post.`,
+      });
+      const populatedNotification = await Notification.findById(notification._id)
+        .populate("sender", "name username profileImage")
+        .populate("post", "media mediaType caption");
+      const receiverSocketId = getReceiverSocketId(post.author.toString());
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit("newNotification", populatedNotification);
+      }
+    }
     await post.save();
 
     const updatedPost = await Post.findById(postId).populate({
