@@ -1,0 +1,49 @@
+{
+  "name": "Vistagram",
+  "short_name": "Vistagram",
+  "description": "Connect, Share, and Discover Stories, Reels & Posts on Vistagram.",
+  "start_url": "/",
+  "id": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["social", "entertainment", "photo", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "Reels",
+      "short_name": "Reels",
+      "description": "Watch full-screen trending Reels",
+      "url": "/reels",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Direct Messages",
+      "short_name": "Messages",
+      "description": "Chat with friends in real-time",
+      "url": "/message",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
