@@ -12,15 +12,16 @@ const useGetCurrentUser = () => {
       try {
         const response = await axios.get(`${serverUrl}/api/users/current`, {
           withCredentials: true,
+          timeout: 12000,
         });
         if (response.data?.user) {
           dispatch(setUserData(response.data.user));
+        } else {
+          dispatch(setUserData(null));
         }
       } catch (error) {
         console.log('Error fetching current user:', error.message);
-        if (error.response?.status === 401) {
-          dispatch(setUserData(null));
-        }
+        dispatch(setUserData(null));
       } finally {
         dispatch(setLoading(false));
       }

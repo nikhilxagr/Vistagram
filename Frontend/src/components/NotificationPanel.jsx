@@ -8,7 +8,6 @@ import { FiHeart, FiMessageCircle, FiUserPlus, FiX } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa6";
 import { markNotificationRead, markAllRead } from "../redux/notification.Slice";
 
-// Icon per notification type
 const typeIcon = {
   like: <FaHeart className="text-red-500" size={14} />,
   comment: <FiMessageCircle className="text-blue-400" size={14} />,

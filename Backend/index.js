@@ -44,6 +44,14 @@ app.use(cors({
   credentials: true,
 }));
 
+app.get("/", (req, res) => {
+  res.status(200).json({ status: "success", message: "Vistagram API is live" });
+});
+
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
+});
+
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
 app.use("/api/posts", postRouter);
@@ -52,7 +60,7 @@ app.use("/api/stories", storyRouter);
 app.use("/api/story", storyRouter);
 app.use("/api/messages", messageRouter);
 
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
   connectDB();
   console.log(`✅ Server is running on port ${PORT}`);
 });
