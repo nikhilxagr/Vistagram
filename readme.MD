@@ -1,195 +1,179 @@
 <div align="center">
 
-![Header](https://capsule-render.vercel.app/api?type=waving&color=0:00C2FF,100:00E5A8&height=220&section=header&text=Vistagram%20%7C%20Social%20Media&fontSize=48&fontColor=ffffff&animation=fadeIn&fontAlignY=35&desc=Full%20Stack%20%7C%20Posts%20%7C%20Reels%20%7C%20Stories%20%7C%20Real-Time%20Social%20Platform&descAlignY=56&descSize=18)
+![Header](https://capsule-render.vercel.app/api?type=waving&color=0:00C2FF,100:00E5A8&height=220&section=header&text=Vistagram%20%7C%20Social%20Media&fontSize=48&fontColor=ffffff&animation=fadeIn&fontAlignY=35&desc=Full%20Stack%20%7C%20Posts%20%7C%20Reels%20%7C%20Stories%20%7C%20iTunes%20Music%20%7C%20Real-Time%20Chat&descAlignY=56&descSize=18)
 
-<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&duration=2400&pause=900&color=00C2FF&center=true&vCenter=true&width=900&lines=React+19+%2B+Vite+%2B+Modern+UI;Node.js+%2B+Express+5+%2B+MongoDB+Atlas;JWT+Cookie+Auth+%7C+Protected+Routes;Posts+%7C+Reels+%7C+Ephemeral+24h+Stories" alt="Typing animation" />
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&duration=2400&pause=900&color=00C2FF&center=true&vCenter=true&width=900&lines=Stories+with+iTunes+Music+%2B+Draggable+Stickers;Posts+%2B+Reels+%2B+Bottom-Sheet+Comments;Real-Time+Chat+%2B+Notifications+via+Socket.io;React+19+%2B+Node.js+%2B+Express+5+%2B+MongoDB" alt="Typing animation" />
 
-### Next-generation social platform for sharing moments, reels, and stories in real-time
+### Next-generation social platform for sharing moments, reels, stories with background music, and real-time messaging
+
+<br/>
+
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-black?style=for-the-badge&logo=vercel&logoColor=white)](https://myvistagram.vercel.app/)
+[![Download Android APK](https://img.shields.io/badge/Download-Android%20APK%20(v1.0.0)-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/nikhilxagr/Vistagram/raw/main/Vistagram.apk)
+[![Backend API](https://img.shields.io/badge/Backend-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://vistagram-backend-zwgy.onrender.com)
+[![GitHub Release](https://img.shields.io/badge/Release-v1.0.0-00C2FF?style=for-the-badge&logo=github&logoColor=white)](https://github.com/nikhilxagr/Vistagram/releases/tag/v1.0.0)
+
+<br/>
 
 ![Frontend](https://img.shields.io/badge/Frontend-React%2019%20%2B%20Vite-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![Backend](https://img.shields.io/badge/Backend-Node.js%20%2B%20Express%205-339933?style=for-the-badge&logo=node.js&logoColor=white)
 ![Database](https://img.shields.io/badge/Database-MongoDB%20Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
+![Realtime](https://img.shields.io/badge/Realtime-Socket.io-010101?style=for-the-badge&logo=socketdotio&logoColor=white)
+![Cloudinary](https://img.shields.io/badge/Media-Cloudinary%20CDN-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)
 ![Auth](https://img.shields.io/badge/Auth-JWT%20%2B%20HTTP--Only%20Cookies-F57C00?style=for-the-badge)
-![Security](https://img.shields.io/badge/Security-bcryptjs%20%7C%20CORS%20%7C%20isAuth%20Middleware-7B1FA2?style=for-the-badge)
-![Features](https://img.shields.io/badge/Features-Posts%20%7C%20Reels%20%7C%2024h%20Stories-00B4D8?style=for-the-badge)
 
 </div>
 
 ---
 
-## About This Project
+## 📲 Download Android App (APK)
 
-**Vistagram** is a production-grade full-stack social media platform engineered from the ground up to support modern community-driven interaction and media sharing. Inspired by industry-leading social networks, Vistagram seamlessly integrates content creation, social networking, media feeds, and robust authentication into a clean, modern monorepo setup.
+Get the **100% full-screen native Android application** without any browser address bar:
 
-### Core Features
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/nikhilxagr/Vistagram/raw/main/Vistagram.apk">
+        <img src="https://img.shields.io/badge/Direct%20Download-Vistagram.apk%20(2.1%20MB)-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" />
+      </a>
+    </td>
+    <td>
+      <ul>
+        <li>📥 <b>GitHub Direct Download:</b> <a href="https://github.com/nikhilxagr/Vistagram/raw/main/Vistagram.apk">Vistagram.apk</a></li>
+        <li>🌐 <b>Web Hosted Mirror:</b> <a href="https://myvistagram.vercel.app/Vistagram.apk">https://myvistagram.vercel.app/Vistagram.apk</a></li>
+        <li>📦 <b>Local File in Repo:</b> <a href="./Vistagram.apk"><code>./Vistagram.apk</code></a></li>
+      </ul>
+    </td>
+  </tr>
+</table>
 
-- 👤 **User Profiles & Identity**: Account registration, secure authentication, customizable user profiles, avatars, and bios.
-- 📸 **Content Sharing (Posts)**: High-resolution image and video posts with captions, likes, and comment threads.
-- 🎥 **Short-Form Video (Reels)**: Dynamic video reels feed with engagement metrics.
-- ⏳ **Ephemeral Content (Stories)**: 24-hour auto-expiring media stories powered by MongoDB TTL indexes.
-- 🤝 **Social Graph**: Follower and following mechanisms to build personalized activity feeds.
-- 💾 **Content Bookmarking**: Save favorite posts for quick offline reference.
-- 🔐 **Secure Session Management**: HTTP-only JWT cookies for seamless and tamper-proof user authorization.
+> [!TIP]
+> **Installation Note:** When downloading the `.apk` on your Android device, tap **"Install"** (or enable *Install from Unknown Sources* in Chrome settings). Once installed, Vistagram opens in full-screen native app mode just like Instagram!
 
 ---
 
-## Tech Stack
+## 🌟 Key Features
+
+### 🎵 1. Story Music Integration (Apple iTunes Search API)
+- **Live Song Search**: Search millions of songs across Bollywood, Pop Hits, Romantic, Punjabi, and Lofi categories.
+- **Audio Previews**: Tap `▶️` to preview 30-second audio snippets with animated soundwave visualizers before adding.
+- **🖐️ Draggable Movable Stickers**: Drag and reposition the album cover song sticker anywhere on your story (supports touch and mouse dragging).
+- **⏱️ Duration Selection**: Switch between **15s** and **30s** story playback timers with one tap.
+- **Synced Background Player**: Stories stream background audio in sync with the progress bar, automatically pausing on screen hold and muting/unmuting with volume controls.
+
+### 📸 2. Posts & Reels with Music
+- **Music on Posts & Reels**: Attach background audio from iTunes to any photo, video post, or reel.
+- **Header Audio Ticker**: Displays `🎵 Song Title • Artist` with live animated equalizer soundbars (`ılılı`).
+- **Interactive Audio Toggle**: Tap the floating volume button (`🔊 / 🔇`) on photo posts to stream attached audio.
+- **Full-Screen Reels Feed**: Vertical smooth snap scrolling, double-tap heart pop animations, spinning vinyl disc ticker, and seek scrubber.
+
+### 💬 3. Instagram-Style Bottom Sheet Comments Drawer
+- **Smooth Spring Slide-Up Drawer**: Dark glassmorphic backdrop (`#121212`) with drag pill handle.
+- **⚡ Quick Emoji Reaction Bar**: One-tap emoji reactions (`❤️ 🙌 🔥 👏 😢 😍 😮 😂`) directly into the input.
+- **Author Badges & Replies**: Dedicated `Author` badge and one-tap `@username` mention replies.
+- **Heart Likes & Long-Press Deletion**: Heart like counters with live state updates, and long-press (500ms) delete dialog for comment owners.
+
+### ⚡ 4. Real-Time Chat & Live Notifications (Socket.IO)
+- **1-on-1 Direct Messaging**: Real-time chatting powered by WebSockets with online/offline indicators.
+- **Media in Messages**: Send photos and videos directly in direct message conversations.
+- **Push Notification Alerts**: Live notification badges and alerts for new likes, comments, and followers.
+
+### 🔒 5. Authentication & User Profiles
+- **Secure JWT Auth**: HTTP-only cookies with `bcryptjs` password hashing and protected routing middleware.
+- **Email OTP Verification**: 6-digit OTP code verification for signup and password resets powered by Nodemailer.
+- **Profile Customization**: Update profile avatar, name, username, and bio.
+- **Social Graph**: Follow/unfollow system with follower/following lists and saved/bookmarked collections.
+
+---
+
+## 🛠️ Tech Stack
 
 ### Frontend
-
-| Technology | Version | Purpose |
-|---|---|---|
-| **React** | ^19.2.7 | UI framework utilizing modern hooks and concurrent rendering |
-| **Vite** | ^8.1.1 | Next-generation frontend build tooling with instant HMR |
-| **Oxlint** | ^1.71.0 | High-performance JavaScript/JSX linter |
-| **Vanilla CSS** | Standard | Custom styling and design tokens — zero heavy framework dependencies |
-
----
+- **React 19** + **Vite 8**
+- **Redux Toolkit** (Global state management for Auth, Posts, Reels, Stories, Notifications)
+- **Tailwind CSS** (Modern responsive styling & glassmorphic tokens)
+- **React Icons** + **React Spinners**
+- **Axios** (With cookie credential support)
+- **PWA** (`manifest.json`, `sw.js`, `.well-known/assetlinks.json`)
 
 ### Backend
-
-| Package | Version | Purpose |
-|---|---|---|
-| **Express** | ^5.2.1 | Modern web framework (v5 with native async error routing) |
-| **Mongoose** | ^9.8.0 | MongoDB ODM for schema modeling and relationship handling |
-| **jsonwebtoken** | ^9.0.3 | Secure JSON Web Tokens for identity verification |
-| **bcryptjs** | ^3.0.3 | Password hashing with salt factor 10 |
-| **cookie-parser** | ^1.4.7 | Parse HTTP request cookies into accessible objects |
-| **cors** | ^2.8.6 | Cross-Origin Resource Sharing configuration |
-| **dotenv** | ^17.4.2 | Environment variable management |
-| **nodemon** | ^3.1.14 | Development server live reload watcher |
+- **Node.js** + **Express 5** (ES Modules)
+- **MongoDB Atlas** + **Mongoose 9** (NoSQL schema modeling + TTL expiration indexes)
+- **Socket.IO** (Real-time bidirectional WebSocket communication)
+- **Cloudinary** (Auto-detecting image & video upload CDN with 180s timeout)
+- **JSON Web Tokens (JWT)** + **Cookie-Parser** (HTTP-only secure auth)
+- **Nodemailer** (Email OTP delivery)
 
 ---
 
-### Database & Network Infrastructure
-
-- **MongoDB Atlas**: Cloud-hosted NoSQL database storing users, posts, reels, and stories with auto-expiring TTL indexes.
-- **Custom DNS Resolver**: Fallback DNS handling (`8.8.8.8`, `1.1.1.1`) inside `db.js` to eliminate `mongodb+srv://` SRV resolution failures in restricted local network setups.
-
----
-
-## Project Structure
+## 📁 Repository Structure
 
 ```text
 Vistagram/
 │
+├── Vistagram.apk                    # Android Standalone APK File
+│
 ├── Frontend/
 │   ├── public/
-│   │   ├── favicon.ico
-│   │   └── icons.svg                # SVG icons asset bundle
+│   │   ├── manifest.json            # PWA Standalone & Fullscreen manifest
+│   │   ├── sw.js                    # Offline Service Worker cache
+│   │   ├── Vistagram.apk            # Direct hosted APK mirror
+│   │   └── .well-known/
+│   │       └── assetlinks.json      # Android Digital Asset Links (TWA verification)
 │   ├── src/
-│   │   ├── App.jsx                  # Main UI layout & components
-│   │   ├── App.css                  # Component-specific styles
-│   │   ├── index.css                # Global CSS variables & resetting
-│   │   ├── main.jsx                 # React root entry point
-│   │   └── assets/                  # Images & static branding assets
-│   ├── .gitignore
-│   ├── .oxlintrc.json               # Oxlint configuration
-│   ├── index.html                   # Application entry HTML
-│   ├── package.json                 # Frontend scripts & dependencies
-│   └── vite.config.js               # Vite build configuration
+│   │   ├── components/
+│   │   │   ├── CommentsDrawer.jsx   # Bottom sheet comments drawer with quick emojis
+│   │   │   ├── StoryComposerModal.jsx# Story preview screen with draggable music sticker
+│   │   │   ├── StoryMusicPicker.jsx # iTunes music search & 30s audio preview picker
+│   │   │   ├── Post.jsx             # Feed post card with music player & actions
+│   │   │   ├── ReelCard.jsx         # Full-screen reel video player with music ticker
+│   │   │   ├── Feed.jsx             # Home feed with stories tray & infinite posts
+│   │   │   ├── Nav.jsx              # Bottom mobile navigation bar
+│   │   │   └── LeftHome.jsx         # Desktop sidebar navigation
+│   │   ├── pages/
+│   │   │   ├── Home.jsx             # Main application feed container
+│   │   │   ├── Story.jsx            # 24h story viewer with synced iTunes audio
+│   │   │   ├── Reels.jsx            # Vertical video reels feed
+│   │   │   ├── Upload.jsx           # Unified Post / Reel / Story upload studio
+│   │   │   ├── Messages.jsx         # Real-time chat list & conversation area
+│   │   │   ├── Profile.jsx          # User profile with posts, saved, reels tabs
+│   │   │   └── Notifications.jsx    # Real-time activity notifications
+│   │   ├── redux/                   # Redux Toolkit slices (user, post, reel, story)
+│   │   └── App.jsx                  # Main router setup & socket listeners
+│   └── package.json
 │
 └── Backend/
     ├── config/
     │   ├── db.js                    # MongoDB Atlas connection + DNS fallback
-    │   └── token.js                 # JWT token generation helper
+    │   └── cloudinary.js            # Cloudinary upload configuration
     ├── controllers/
-    │   ├── auth.controllers.js      # Signup, signin & signout logic
-    │   └── user.controllers.js      # Profile fetch & user account handlers
-    ├── middleware/
-    │   └── isAuth.js                # JWT cookie verification middleware
+    │   ├── auth.controllers.js      # Auth, OTP verification, password reset
+    │   ├── post.controllers.js      # Post creation with music, likes, comments
+    │   ├── reel.controllers.js      # Reel creation with music, likes, comments
+    │   ├── story.controllers.js     # Story creation with music, iTunes proxy
+    │   ├── message.controllers.js   # Real-time direct messaging
+    │   └── user.controllers.js      # Profile fetch, follow/unfollow
     ├── models/
-    │   ├── user.model.js            # User profile & social graph schema
-    │   ├── post.model.js            # Image/Video post schema
-    │   ├── reel.model.js            # Short video reel schema
-    │   └── story,model.js           # 24-hour expiring story schema
-    ├── routes/
-    │   ├── auth.routes.js           # Auth endpoint definitions
-    │   └── user.routes.js           # User endpoint definitions
-    ├── .env                         # Backend environment variables
-    ├── .gitignore
+    │   ├── user.model.js
+    │   ├── post.model.js            # Includes music sub-schema
+    │   ├── reel.model.js            # Includes music sub-schema
+    │   ├── story.model.js           # Includes music sub-schema + 24h TTL index
+    │   └── message.model.js
+    ├── routes/                      # Express route definitions
+    ├── socket.js                    # Socket.IO connection & event handlers
     ├── index.js                     # Express app setup & server entry
-    └── package.json                 # Backend scripts & dependencies
+    └── package.json
 ```
 
 ---
 
-## Database Schemas
-
-### 1. User Model (`User`)
-
-| Field | Type | Description |
-|---|---|---|
-| `name` | String | Full display name (Required) |
-| `username` | String | Unique handle for profile routing (Required, Unique) |
-| `email` | String | Unique account email address (Required, Unique) |
-| `password` | String | Hashed password string via bcryptjs (Required) |
-| `profileImage` | String | URL path to avatar image |
-| `followers` | `[ObjectId]` | Array of references to `User` |
-| `following` | `[ObjectId]` | Array of references to `User` |
-| `posts` | `[ObjectId]` | Array of references to `Post` |
-| `savedPosts` | `[ObjectId]` | Array of bookmarked `Post` references |
-| `reels` | `[ObjectId]` | Array of references to `Reel` |
-| `story` | `[ObjectId]` | Array of references to active `Story` |
-
-### 2. Post Model (`Post`)
-
-| Field | Type | Description |
-|---|---|---|
-| `author` | `ObjectId` | Reference to post creator `User` (Required) |
-| `mediaType` | Enum | Content format: `"image"` or `"video"` (Required) |
-| `media` | String | Cloud storage URL of the uploaded image/video |
-| `caption` | String | Post text caption |
-| `likes` | `[ObjectId]` | Array of user IDs who liked the post |
-| `comments` | `[ObjectId]` | Array of references to comments |
-
-### 3. Reel Model (`Reel`)
-
-| Field | Type | Description |
-|---|---|---|
-| `author` | `ObjectId` | Reference to reel creator `User` (Required) |
-| `media` | String | Cloud storage URL of the video file |
-| `caption` | String | Video description & hashtags |
-| `likes` | `[ObjectId]` | User engagement likes array |
-| `comments` | `[ObjectId]` | User comment references array |
-
-### 4. Story Model (`Story`)
-
-| Field | Type | Description |
-|---|---|---|
-| `author` | `ObjectId` | Reference to story creator `User` (Required) |
-| `mediaType` | Enum | Story media type: `"image"` or `"video"` |
-| `media` | String | Cloud URL of story media |
-| `viewers` | `[ObjectId]` | Array of user IDs who viewed the story |
-| `createdAt` | Date | Auto-expires after 24 hours (`expires: 86400` TTL index) |
-
----
-
-## API Endpoints
-
-### Auth Endpoints (`/api/auth`)
-
-| Method | Endpoint | Access | Description |
-|---|---|---|---|
-| `POST` | `/api/auth/signup` | Public | Register new account & return HTTP-only JWT cookie |
-| `POST` | `/api/auth/signin` | Public | Authenticate user & attach HTTP-only JWT cookie |
-| `POST` | `/api/auth/signout` | Public | Clear auth cookie and end session |
-
-### User Endpoints (`/api/users`)
-
-| Method | Endpoint | Access | Description |
-|---|---|---|---|
-| `GET` | `/api/users/current` | Protected (`isAuth`) | Fetch authenticated user's profile data |
-
----
-
-## Quick Start
+## ⚡ Quick Start Guide
 
 ### 1. Prerequisites
-
 - **Node.js**: v18.x or higher
 - **npm**: v9.x or higher
-- **MongoDB**: Active MongoDB Atlas Cluster URI
+- **MongoDB**: Active MongoDB Atlas URI
+- **Cloudinary Account**: Cloud name, API key & API secret
 
 ---
 
@@ -217,125 +201,74 @@ Create a `.env` file in the `Backend/` directory:
 
 ```env
 PORT=8000
-MONGO_URI=mongodb+srv://<username>:<password>@cluster0.e5ptmmf.mongodb.net/Vistagram
-JWT_SECRET=your_super_secret_jwt_key_here
-# Optional DNS Fallback (comma-separated DNS servers)
-# MONGO_DNS_SERVERS=8.8.8.8,1.1.1.1
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_super_secret_jwt_key
+CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_email_app_password
+CLIENT_URL=http://localhost:5173
 ```
 
 ---
 
-### 4. Run the Development Servers
+### 4. Run Locally
 
 **Start Backend (Port 8000):**
-
 ```bash
 cd Backend
 npm run dev
 ```
 
-**Start Frontend (Vite Dev Server):**
-
+**Start Frontend (Port 5173):**
 ```bash
 cd Frontend
 npm run dev
 ```
 
-| Service | URL |
-|---|---|
-| **Frontend App** | `http://localhost:5173` |
-| **Backend API** | `http://localhost:8000` |
-| **Current User API** | `http://localhost:8000/api/users/current` |
+Visit **`http://localhost:5173`** in your browser!
 
 ---
 
-## Security Architecture
+## 🌐 API Reference
 
-| Security Layer | Implementation Details |
-|---|---|
-| **Authentication** | JSON Web Tokens (JWT) signed with `JWT_SECRET` and delivered via `httpOnly` cookies (`sameSite: "strict"`). |
-| **Password Hashing** | One-way hashing using `bcryptjs` with salt rounds = 10. Raw passwords are never stored. |
-| **Protected Routes** | Custom `isAuth` middleware extracts and verifies cookie tokens before granting controller access. |
-| **CORS Control** | Controlled origin allowlist configuration allowing secure cross-origin credential sharing. |
-| **Robust Database Connection** | Custom DNS resolver in `db.js` prevents network failures when connecting to MongoDB Atlas SRV URIs. |
+### Story Endpoints (`/api/story`)
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `GET` | `/api/story/music/search?query=` | Private | Search songs via iTunes proxy |
+| `POST` | `/api/story/upload` | Private | Upload photo/video story with music payload |
+| `GET` | `/api/story/all` | Private | Fetch active stories of followed users |
+| `PUT` | `/api/story/:storyId/view` | Private | Mark story as viewed |
+| `DELETE` | `/api/story/delete/:storyId` | Private | Delete own active story |
 
----
+### Post Endpoints (`/api/posts`)
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `POST` | `/api/posts/upload` | Private | Create new post with media, caption & music |
+| `GET` | `/api/posts/all` | Private | Fetch chronological feed posts |
+| `PUT` | `/api/posts/:id/like` | Private | Like / unlike post |
+| `POST` | `/api/posts/:id/comment` | Private | Add comment to post |
+| `DELETE` | `/api/posts/:postId/comment/:commentId` | Private | Delete comment |
 
-## System Architecture
-
-```mermaid
-flowchart TD
-    User(["🌐 User / Client Browser"])
-
-    subgraph Frontend ["▲ Frontend — React 19 + Vite"]
-        UI["React Components\nFeed · Stories · Reels · Profiles"]
-        Axios["Axios / Fetch Client\nwithCredentials: true"]
-        UI --> Axios
-    end
-
-    subgraph Backend ["🖥️ Backend — Express 5 API"]
-        Server["index.js\nExpress Server"]
-        AuthMW["isAuth Middleware\nVerify JWT Cookie"]
-        
-        subgraph Controllers ["Controllers & Routes"]
-            AuthCtrl["Auth Controllers\nsignup | signin | signout"]
-            UserCtrl["User Controllers\ngetCurrentUser"]
-        end
-
-        subgraph Models ["Mongoose Models"]
-            UM["User Model\nFollowers / Posts / Reels / Stories"]
-            PM["Post Model\nImage / Video / Comments"]
-            RM["Reel Model\nVideo Feed"]
-            SM["Story Model\n24h Expiring TTL"]
-        end
-    end
-
-    subgraph Database ["☁️ Database Layer"]
-        Atlas[("MongoDB Atlas\nCloud Replica Set")]
-    end
-
-    User --> UI
-    Axios -->|"HTTP Requests\nCookie Credentials"| Server
-    Server --> AuthMW
-    AuthMW --> Controllers
-    Controllers --> Models
-    Models -->|"Mongoose ODM Queries"| Atlas
-```
+### Reel Endpoints (`/api/reels`)
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `POST` | `/api/reels/upload` | Private | Upload reel video with caption & music |
+| `GET` | `/api/reels/all` | Private | Fetch all video reels |
+| `PUT` | `/api/reels/:id/like` | Private | Like / unlike reel |
+| `POST` | `/api/reels/:id/comment` | Private | Add comment to reel |
 
 ---
 
-## Roadmap & Planned Features
-
-- [ ] 💬 **Real-time Messaging**: Instant direct messages and chat notifications via `Socket.io`.
-- [ ] ☁️ **Cloud Storage Integration**: Cloudinary / AWS S3 integration for seamless media upload handling.
-- [ ] 🔍 **Search & Explore**: Hashtag discovery, trending reels, and user search indexing.
-- [ ] 🔔 **Real-time Notifications**: Likes, comments, and new follower alert system.
-- [ ] 🎨 **Dark / Light Mode**: Custom UI theme switcher with standard design tokens.
-
----
-
-## License
-
-This repository is released under standard software license terms. See [LICENSE](LICENSE) for full details.
-
----
-
-## Connect With Me
+## 👨‍💻 Connect With the Author
 
 <div align="center">
 
+[![Portfolio](https://img.shields.io/badge/Live%20Portfolio-00C2FF?style=for-the-badge&logo=vercel&logoColor=white)](https://nikhilxagr.vercel.app)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/nikhilxagr)
 [![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/nikhilxagr)
-[![Portfolio](https://img.shields.io/badge/Live%20Portfolio-00C2FF?style=for-the-badge&logo=vercel&logoColor=white)](https://nikhilxagr.vercel.app)
 
-</div>
-
----
-
-<div align="center">
-
-### ⭐ Star this repo if you find it helpful!
-
-![Footer](https://capsule-render.vercel.app/api?type=waving&color=0:00C2FF,100:00E5A8&height=120&section=footer)
+**Made with ❤️ by [Nikhil Agrahari](https://github.com/nikhilxagr)**
 
 </div>
