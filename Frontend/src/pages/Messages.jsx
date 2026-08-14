@@ -7,7 +7,7 @@ import { setSelectedUser } from "../redux/message.Slice";
 import { serverUrl } from "../App";
 import dp from "../assets/dp.png";
 import { ClipLoader } from "react-spinners";
-import OnlineUser from "../components/onlineUser";
+import OnlineUser from "../components/OnlineUser";
 
 function Messages() {
   const navigate = useNavigate();
