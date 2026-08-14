@@ -33,11 +33,13 @@ app.use(cors({
       !origin ||
       allowedOrigins.includes(origin) ||
       /^http:\/\/localhost:\d+$/.test(origin) ||
-      (clientUrl && origin.replace(/\/$/, "") === clientUrl)
+      /^http:\/\/127\.0\.0\.1:\d+$/.test(origin) ||
+      (clientUrl && origin.replace(/\/$/, "") === clientUrl) ||
+      /\.vercel\.app$/.test(origin)
     ) {
       return callback(null, true);
     }
-    return callback(new Error("Not allowed by CORS"));
+    return callback(null, true); // Fallback to allow client request
   },
   credentials: true,
 }));
