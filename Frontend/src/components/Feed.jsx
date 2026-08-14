@@ -16,7 +16,7 @@ import axios from "axios";
 import { serverUrl } from "../App.jsx";
 import { FaRegHeart } from "react-icons/fa";
 import { FiPlus } from "react-icons/fi";
-
+import StoryComposerModal from "./StoryComposerModal";
 
 function Feed() {
   const navigate = useNavigate();
@@ -111,15 +111,29 @@ function Feed() {
     navigate("/story", { state: { groupIdx: gIdx + (hasUserStory ? 1 : 0) } });
   };
 
-  const handleFileSelect = async (e) => {
+  const [composerFile, setComposerFile] = useState(null);
+
+  const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
+    if (!file) return;
+    setComposerFile(file);
+    e.target.value = "";
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handlePublishComposer = async (file, musicData) => {
     if (!file) return;
 
     setIsUploadingStory(true);
     const formData = new FormData();
     formData.append("media", file);
-    const isVideo = file.type.startsWith("video/");
+    const isVideo = file.type?.startsWith("video/") || file.name?.match(/\.(mp4|mov|webm|mkv|3gp|avi|m4v)$/i);
     formData.append("mediaType", isVideo ? "video" : "image");
+    if (musicData) {
+      formData.append("music", JSON.stringify(musicData));
+    }
 
     try {
       const res = await axios.post(`${serverUrl}/api/story/upload`, formData, {
@@ -142,9 +156,6 @@ function Feed() {
       console.error("Error uploading story:", error);
     } finally {
       setIsUploadingStory(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
     }
   };
 
@@ -236,6 +247,14 @@ function Feed() {
 
         <Nav />
       </div>
+
+      <StoryComposerModal
+        isOpen={Boolean(composerFile)}
+        file={composerFile}
+        onClose={() => setComposerFile(null)}
+        onPublish={handlePublishComposer}
+        currentUser={userData}
+      />
     </div>
   );
 }

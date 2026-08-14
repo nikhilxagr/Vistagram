@@ -7,7 +7,7 @@ import { getReceiverSocketId, io } from "../socket.js";
 
 export const uploadPost = async (req, res) => {
   try {
-    const { caption, mediaType } = req.body;
+    const { caption, mediaType, music } = req.body;
     let mediaUrl;
 
     if (req.file) {
@@ -19,11 +19,21 @@ export const uploadPost = async (req, res) => {
 
     const userId = req.userId || req.user?._id;
 
+    let musicData = null;
+    if (music) {
+      try {
+        musicData = typeof music === "string" ? JSON.parse(music) : music;
+      } catch (err) {
+        console.log("Could not parse post music:", err);
+      }
+    }
+
     const post = await Post.create({
       caption,
       media: mediaUrl,
       mediaType: mediaType || "image",
       author: userId,
+      ...(musicData ? { music: musicData } : {}),
     });
 
     const user = await User.findById(userId);

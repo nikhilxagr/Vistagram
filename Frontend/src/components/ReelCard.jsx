@@ -10,6 +10,7 @@ import { ClipLoader } from "react-spinners";
 import { toggleLikeReel, addCommentToReel } from "../redux/reel.Slice";
 import { setUserData } from "../redux/userSlice";
 import ReelShareModal from "./ReelShareModal";
+import CommentsDrawer from "./CommentsDrawer";
 
 function ReelCard({ reel }) {
   const navigate = useNavigate();
@@ -525,13 +526,21 @@ function ReelCard({ reel }) {
         )}
 
         {/* Audio Ticker */}
-        <div className="flex items-center gap-2 text-[11px] text-gray-300 font-medium pt-0.5">
-          <FiMusic size={12} className="text-gray-300 animate-spin duration-3000" />
-          <span className="truncate">{authorName} · Original Audio</span>
+        <div className="flex items-center gap-2 text-[11px] text-pink-300 font-medium pt-0.5">
+          <FiMusic size={12} className="text-pink-400 animate-spin duration-3000 flex-shrink-0" />
+          <span className="truncate">
+            {reel?.music?.title ? `${reel.music.title} • ${reel.music.artist}` : `${authorName} · Original Audio`}
+          </span>
+          {reel?.music?.title && (
+            <div className="flex items-center gap-0.5 ml-0.5 flex-shrink-0">
+              <span className="w-0.5 h-2 bg-pink-400 animate-pulse rounded-full" />
+              <span className="w-0.5 h-3 bg-pink-400 animate-pulse delay-75 rounded-full" />
+              <span className="w-0.5 h-1.5 bg-pink-400 animate-pulse delay-150 rounded-full" />
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Interactive Bottom Video Progress Bar */}
       <div
         onClick={handleSeek}
         className="absolute bottom-0 left-0 w-full h-1.5 bg-white/20 hover:h-2.5 transition-all duration-200 cursor-pointer z-30 group"
@@ -541,197 +550,16 @@ function ReelCard({ reel }) {
           style={{ width: `${videoProgress}%` }}
         />
       </div>
-
-      {showComments && (
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-40 flex flex-col justify-end transition-opacity duration-300">
-          <div
-            ref={commentRef}
-            className="w-full bg-gray-950 text-white rounded-t-3xl border-t border-gray-800 p-5 max-h-[70%] flex flex-col gap-3 shadow-2xl transition-transform transform translate-y-0 duration-300 ease-out animate-in slide-in-from-bottom"
-          >
-            <div
-              className="w-12 h-1 bg-gray-600 rounded-full mx-auto mb-1 cursor-pointer hover:bg-gray-500 transition"
-              onClick={() => setShowComments(false)}
-            />
-
-            <div className="flex items-center justify-between border-b border-gray-800 pb-3">
-              <h3 className="text-sm font-bold text-white tracking-wide">
-                Comments ({commentsList.length})
-              </h3>
-              <button
-                onClick={() => setShowComments(false)}
-                className="text-gray-400 hover:text-white p-1 cursor-pointer transition"
-              >
-                <FiX size={20} />
-              </button>
-            </div>
-
-            {/* Comments List */}
-            <div className="flex-1 overflow-y-auto flex flex-col gap-2.5 pr-1 py-1 no-scrollbar">
-              {commentsList.length > 0 ? (
-                commentsList.map((c, idx) => {
-                  const commentUser =
-                    typeof c.author === "object" && c.author !== null ? c.author : {};
-                  const isCurrentLoggedUser =
-                    (c.author?._id || c.author || "").toString() === (currentUserId || "").toString();
-                  const isReelAuthor =
-                    (authorId || "").toString() === (currentUserId || "").toString();
-                  const canDelete = isCurrentLoggedUser || isReelAuthor;
-
-                  const cUsername =
-                    commentUser.username ||
-                    commentUser.userName ||
-                    commentUser.name ||
-                    (isCurrentLoggedUser ? (userData?.username || userData?.userName) : "user");
-
-                  const cImage =
-                    commentUser.profileImage ||
-                    (isCurrentLoggedUser ? userData?.profileImage : null) ||
-                    dp;
-
-                  const isCommentLiked = Array.isArray(c.likes) && c.likes.some(
-                    (id) => (id._id || id || "").toString() === (currentUserId || "").toString()
-                  );
-                  const commentLikesCount = Array.isArray(c.likes) ? c.likes.length : 0;
-
-                  return (
-                    <div
-                      key={c._id || idx}
-                      onTouchStart={() => handleCommentPressStart(c)}
-                      onTouchEnd={handleCommentPressEnd}
-                      onMouseDown={() => handleCommentPressStart(c)}
-                      onMouseUp={handleCommentPressEnd}
-                      onMouseLeave={handleCommentPressEnd}
-                      className="group/comment flex items-start justify-between gap-3 text-xs text-gray-200 p-1.5 rounded-xl hover:bg-gray-900/50 transition select-none"
-                    >
-                      <div className="flex items-start gap-2.5 flex-1 min-w-0">
-                        <div
-                          onClick={() => navigate(`/profile/${cUsername}`)}
-                          className="w-8 h-8 rounded-full overflow-hidden border border-gray-700 bg-gray-900 flex-shrink-0 cursor-pointer"
-                        >
-                          <img src={cImage} alt={cUsername} className="w-full h-full object-cover" />
-                        </div>
-                        <div className="flex flex-col text-left flex-1 min-w-0">
-                          <span
-                            onClick={() => navigate(`/profile/${cUsername}`)}
-                            className="font-bold text-white cursor-pointer hover:underline text-[12px]"
-                          >
-                            {cUsername}
-                          </span>
-                          <span className="text-gray-200 mt-0.5 break-words text-xs leading-relaxed">{c.message}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 flex-shrink-0 pt-0.5">
-                        {canDelete && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedCommentToDelete(c);
-                            }}
-                            className="opacity-0 group-hover/comment:opacity-100 text-gray-500 hover:text-red-400 p-1 transition cursor-pointer"
-                            title="Delete comment"
-                          >
-                            <FiTrash2 size={13} />
-                          </button>
-                        )}
-
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleLikeComment(c._id);
-                          }}
-                          className="flex flex-col items-center cursor-pointer text-gray-400 hover:text-red-500 transition p-1"
-                          title="Like comment"
-                        >
-                          {isCommentLiked ? (
-                            <FaHeart className="text-red-500 text-[13px] animate-in zoom-in-50 duration-150" />
-                          ) : (
-                            <FaRegHeart className="text-gray-400 hover:text-white text-[13px]" />
-                          )}
-                          {commentLikesCount > 0 && (
-                            <span className="text-[9px] text-gray-400 font-semibold leading-none mt-0.5">
-                              {commentLikesCount}
-                            </span>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="flex flex-col items-center justify-center py-10 gap-1 text-center">
-                  <p className="text-sm font-bold text-gray-300">No comments yet</p>
-                  <p className="text-xs text-gray-500">Start the conversation on this reel.</p>
-                </div>
-              )}
-            </div>
-
-            {/* Add Comment Input Form */}
-            <form onSubmit={handleAddComment} className="flex items-center gap-2 pt-3 border-t border-gray-800">
-              <div className="w-7 h-7 rounded-full overflow-hidden border border-gray-700 bg-gray-900 flex-shrink-0">
-                <img src={userData?.profileImage || dp} alt="Your avatar" className="w-full h-full object-cover" />
-              </div>
-              <input
-                type="text"
-                value={commentInput}
-                onChange={(e) => setCommentInput(e.target.value)}
-                placeholder={`Add a comment as ${userData?.username || "user"}...`}
-                className="flex-1 text-xs bg-gray-900 border border-gray-800 rounded-full px-4 py-2.5 outline-none focus:border-gray-700 text-white transition"
-              />
-              <button
-                type="submit"
-                disabled={!commentInput.trim() || isSubmittingComment}
-                className="text-xs font-bold text-blue-500 hover:text-blue-400 disabled:opacity-40 cursor-pointer px-2"
-              >
-                Post
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Comment Confirmation Modal */}
-      {selectedCommentToDelete && (
-        <div
-          className="fixed inset-0 z-[250] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150"
-          onClick={() => setSelectedCommentToDelete(null)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-xs bg-gray-950 border border-gray-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col text-center animate-in zoom-in-95 duration-150"
-          >
-            <div className="p-5 flex flex-col items-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mb-1">
-                <FiTrash2 size={20} />
-              </div>
-              <h3 className="text-sm font-bold text-white">Delete Comment?</h3>
-              <p className="text-xs text-gray-400 leading-relaxed px-2">
-                Are you sure you want to delete this comment? This cannot be undone.
-              </p>
-            </div>
-
-            <div className="flex flex-col border-t border-gray-900 divide-y divide-gray-900">
-              <button
-                type="button"
-                onClick={handleDeleteComment}
-                disabled={isDeletingComment}
-                className="w-full py-3 text-xs font-bold text-red-500 hover:bg-red-500/10 transition cursor-pointer flex items-center justify-center gap-2"
-              >
-                {isDeletingComment ? <ClipLoader size={14} color="#ef4444" /> : "Delete"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedCommentToDelete(null)}
-                className="w-full py-3 text-xs font-semibold text-gray-300 hover:bg-gray-900 transition cursor-pointer"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CommentsDrawer
+        isOpen={showComments}
+        onClose={() => setShowComments(false)}
+        postId={reel?._id}
+        postAuthorId={authorId}
+        comments={commentsList}
+        onCommentsUpdate={(updated) => setCommentsList(updated)}
+        currentUserId={currentUserId}
+        currentUser={userData}
+      />
 
       {/* Reel Share Modal */}
       {showShare && (

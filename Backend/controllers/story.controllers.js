@@ -11,7 +11,7 @@ export const uploadStory = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const { mediaType } = req.body;
+    const { mediaType, music } = req.body;
     let mediaUrl;
 
     if (req.file) {
@@ -27,10 +27,20 @@ export const uploadStory = async (req, res) => {
       mediaType === "video"
     );
 
+    let musicData = null;
+    if (music) {
+      try {
+        musicData = typeof music === "string" ? JSON.parse(music) : music;
+      } catch (err) {
+        console.log("Could not parse music object:", err);
+      }
+    }
+
     const story = await Story.create({
       media: mediaUrl,
       mediaType: isVideo ? "video" : "image",
       author: userId,
+      ...(musicData ? { music: musicData } : {}),
     });
 
     user.story = user.story || [];
@@ -62,7 +72,6 @@ export const viewStory = async (req, res) => {
 
     const authorId = (story.author?._id || story.author || "").toString();
 
-    // If author is viewing their own story, ensure author ID is NOT in viewers
     if (authorId === userId.toString()) {
       story.viewers = story.viewers?.filter(
         (id) => (id._id || id).toString() !== userId.toString()
@@ -173,5 +182,37 @@ export const getAllStories = async (req, res) => {
   } catch (error) {
     console.error("Error in getAllStories:", error);
     return res.status(500).json({ message: "Error fetching stories", error: error.message });
+  }
+};
+
+export const searchMusic = async (req, res) => {
+  try {
+    const { query } = req.query;
+    if (!query || !query.trim()) {
+      return res.status(200).json({ results: [] });
+    }
+
+    const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(
+      query.trim()
+    )}&media=music&entity=song&limit=30`;
+
+    const response = await fetch(itunesUrl, { signal: AbortSignal.timeout(10000) });
+    const data = await response.json();
+
+    const results = (data?.results || [])
+      .map((item) => ({
+        id: item.trackId?.toString() || Math.random().toString(),
+        title: item.trackName || "Untitled Track",
+        artist: item.artistName || "Unknown Artist",
+        audioUrl: item.previewUrl,
+        coverImage: item.artworkUrl100?.replace("100x100bb", "300x300bb") || item.artworkUrl100,
+        duration: 30,
+      }))
+      .filter((item) => Boolean(item.audioUrl));
+
+    return res.status(200).json({ results });
+  } catch (error) {
+    console.error("Error in searchMusic proxy:", error?.message);
+    return res.status(500).json({ message: "Failed to fetch songs", error: error.message });
   }
 };

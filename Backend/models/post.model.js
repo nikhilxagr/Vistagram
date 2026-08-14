@@ -20,6 +20,13 @@ const postSchema = new mongoose.Schema(
             type: String,
             default: ""
         },
+        music: {
+            title: { type: String, default: "" },
+            artist: { type: String, default: "" },
+            audioUrl: { type: String, default: "" },
+            coverImage: { type: String, default: "" },
+            duration: { type: Number, default: 30 }
+        },
         likes: [
             {
                 type: mongoose.Schema.Types.ObjectId,

@@ -19,7 +19,9 @@ import {
   FiVolume2,
   FiVolumeX,
   FiTrash2,
+  FiMusic,
 } from "react-icons/fi";
+import StoryComposerModal from "../components/StoryComposerModal";
 
 function Story() {
   const navigate = useNavigate();
@@ -33,7 +35,9 @@ function Story() {
 
   const fileInputRef = useRef(null);
   const storyVideoRef = useRef(null);
+  const storyMusicAudioRef = useRef(new Audio());
 
+  const [composerFile, setComposerFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -193,9 +197,13 @@ function Story() {
       currentStoryList.length === 0 ||
       showViewersModal ||
       isPaused ||
-      isUploading
+      isUploading ||
+      Boolean(composerFile)
     )
       return;
+
+    const durationSec = currentStory?.music?.duration || 10;
+    const intervalStep = (durationSec * 1000) / 100;
 
     const interval = setInterval(() => {
       setProgress((prev) => {
@@ -205,13 +213,13 @@ function Story() {
         }
         return prev + 1;
       });
-    }, 50);
+    }, intervalStep);
 
     return () => clearInterval(interval);
-  }, [currentStory, activeGroupIdx, currentStoryIdx, currentStoryList, storyGroups.length, showViewersModal, isPaused, isUploading]);
+  }, [currentStory, activeGroupIdx, currentStoryIdx, currentStoryList, storyGroups.length, showViewersModal, isPaused, isUploading, composerFile]);
 
   const handleVideoTimeUpdate = () => {
-    if (isPaused) return;
+    if (isPaused || isUploading || Boolean(composerFile)) return;
     const video = storyVideoRef.current;
     if (!video || !video.duration) return;
     const percent = (video.currentTime / video.duration) * 100;
@@ -219,8 +227,37 @@ function Story() {
   };
 
   const handleVideoEnded = () => {
+    if (isPaused || isUploading || Boolean(composerFile)) return;
     goToNextStory();
   };
+
+  // Synchronize background music playback with story
+  useEffect(() => {
+    const audio = storyMusicAudioRef.current;
+    if (composerFile) {
+      audio.pause();
+      if (storyVideoRef.current) {
+        storyVideoRef.current.pause();
+      }
+      return;
+    }
+
+    if (currentStory?.music?.audioUrl) {
+      audio.src = currentStory.music.audioUrl;
+      audio.currentTime = 0;
+      audio.muted = isMuted;
+      if (!isPaused && !isUploading && !composerFile) {
+        audio.play().catch((err) => console.log("Story audio playback:", err));
+      }
+    } else {
+      audio.pause();
+      audio.src = "";
+    }
+
+    return () => {
+      audio.pause();
+    };
+  }, [currentStory, isMuted, isUploading, composerFile, isPaused]);
 
   useEffect(() => {
     setProgress(0);
@@ -238,12 +275,30 @@ function Story() {
     if (storyVideoRef.current) {
       storyVideoRef.current.pause();
     }
+    if (storyMusicAudioRef.current && currentStory?.music?.audioUrl) {
+      storyMusicAudioRef.current.pause();
+    }
   };
 
   const handlePressEnd = () => {
     setIsPaused(false);
     if (storyVideoRef.current) {
       storyVideoRef.current.play().catch(() => {});
+    }
+    if (storyMusicAudioRef.current && currentStory?.music?.audioUrl) {
+      storyMusicAudioRef.current.play().catch(() => {});
+    }
+  };
+
+  const toggleMute = (e) => {
+    if (e) e.stopPropagation();
+    const nextMuted = !isMuted;
+    setIsMuted(nextMuted);
+    if (storyVideoRef.current) {
+      storyVideoRef.current.muted = nextMuted;
+    }
+    if (storyMusicAudioRef.current) {
+      storyMusicAudioRef.current.muted = nextMuted;
     }
   };
 
@@ -253,8 +308,17 @@ function Story() {
     }
   };
 
-  const handleFileSelect = async (e) => {
+  const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
+    if (!file) return;
+    setComposerFile(file);
+    e.target.value = "";
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handlePublishComposer = async (file, musicData) => {
     if (!file) return;
 
     setIsUploading(true);
@@ -262,6 +326,9 @@ function Story() {
     setIsPaused(true);
     if (storyVideoRef.current) {
       storyVideoRef.current.pause();
+    }
+    if (storyMusicAudioRef.current) {
+      storyMusicAudioRef.current.pause();
     }
 
     const isVideo = Boolean(
@@ -272,6 +339,9 @@ function Story() {
     const formData = new FormData();
     formData.append("media", file);
     formData.append("mediaType", isVideo ? "video" : "image");
+    if (musicData) {
+      formData.append("music", JSON.stringify(musicData));
+    }
 
     try {
       const res = await axios.post(`${serverUrl}/api/story/upload`, formData, {
@@ -301,10 +371,6 @@ function Story() {
       setIsUploading(false);
       setUploadSuccess(false);
       setIsPaused(false);
-      e.target.value = "";
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
     }
   };
 
@@ -386,7 +452,7 @@ function Story() {
                 isPaused ? "opacity-0" : "opacity-100"
               }`}
             >
-              <div className="flex items-center gap-2 max-w-[55%] truncate">
+              <div className="flex items-center gap-2 max-w-[65%] min-w-0">
                 <button
                   onClick={() => navigate(-1)}
                   className="bg-black/50 backdrop-blur-md text-white p-1.5 rounded-full border border-white/10 hover:bg-black/70 transition cursor-pointer flex-shrink-0"
@@ -403,7 +469,7 @@ function Story() {
                       }`
                     )
                   }
-                  className="flex items-center gap-2 cursor-pointer group truncate"
+                  className="flex items-center gap-2.5 cursor-pointer group min-w-0"
                 >
                   <div className="w-8 h-8 rounded-full overflow-hidden border border-white/80 shadow flex-shrink-0">
                     <img
@@ -412,22 +478,38 @@ function Story() {
                       className="w-full h-full object-cover group-hover:scale-105 transition"
                     />
                   </div>
-                  <div className="flex flex-col text-left truncate">
-                    <span className="text-xs font-bold text-white drop-shadow group-hover:underline truncate">
+                  <div className="flex flex-col text-left min-w-0">
+                    <span className="text-xs font-bold text-white drop-shadow group-hover:underline truncate max-w-[130px] sm:max-w-[180px]">
                       {currentGroup?.author?.username || currentGroup?.author?.name || "User"}
                     </span>
-                    <span className="text-[9px] text-gray-300 font-medium drop-shadow">
-                      Active story
-                    </span>
+                    {currentStory?.music?.title ? (
+                      <div className="flex items-center gap-1 text-[10px] text-pink-300 font-medium truncate drop-shadow max-w-[140px] sm:max-w-[200px]">
+                        <FiMusic size={10} className="text-pink-400 flex-shrink-0" />
+                        <span className="truncate">
+                          {currentStory.music.title} • {currentStory.music.artist}
+                        </span>
+                        {!isMuted && !isPaused && (
+                          <div className="flex items-center gap-0.5 ml-0.5 flex-shrink-0">
+                            <span className="w-0.5 h-2 bg-pink-400 animate-pulse rounded-full" />
+                            <span className="w-0.5 h-3 bg-pink-400 animate-pulse delay-75 rounded-full" />
+                            <span className="w-0.5 h-1.5 bg-pink-400 animate-pulse delay-150 rounded-full" />
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-[9px] text-gray-300 font-medium drop-shadow">
+                        Active story
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5 flex-shrink-0">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 {currentUserId && (
                   <label
                     onClick={(e) => e.stopPropagation()}
-                    className={`bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1 shadow-lg transition cursor-pointer ${
+                    className={`bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg transition cursor-pointer active:scale-95 ${
                       isUploading ? "opacity-60 pointer-events-none" : ""
                     }`}
                   >
@@ -436,8 +518,7 @@ function Story() {
                     ) : (
                       <>
                         <FiPlus size={13} className="stroke-[3]" />
-                        <span className="hidden sm:inline">Add Story</span>
-                        <span className="sm:hidden">Add</span>
+                        <span>Add Story</span>
                       </>
                     )}
                     <input
@@ -452,7 +533,7 @@ function Story() {
 
                 {/* Sound Mute / Unmute Toggle */}
                 <button
-                  onClick={() => setIsMuted(!isMuted)}
+                  onClick={toggleMute}
                   className="bg-black/50 backdrop-blur-md text-white p-1.5 rounded-full border border-white/10 hover:bg-black/70 transition cursor-pointer"
                   aria-label="Toggle Mute"
                 >
@@ -502,6 +583,50 @@ function Story() {
                   alt="Story content"
                   className="w-full h-full object-contain"
                 />
+              )}
+
+              {/* Positioned Instagram Music Sticker */}
+              {currentStory?.music?.title && currentStory?.music?.stickerPos && (
+                <div
+                  style={{
+                    left: `${currentStory.music.stickerPos.x}%`,
+                    top: `${currentStory.music.stickerPos.y}%`,
+                    transform: "translate(-50%, -50%)",
+                  }}
+                  className={`absolute z-20 pointer-events-none select-none transition-opacity duration-200 ${
+                    isPaused ? "opacity-0" : "opacity-100"
+                  }`}
+                >
+                  <div className="bg-black/75 backdrop-blur-md border border-white/25 rounded-2xl p-2.5 flex items-center gap-3 shadow-2xl max-w-xs pointer-events-none">
+                    <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-900 flex-shrink-0 shadow-md">
+                      <img
+                        src={currentStory.music.coverImage || dp}
+                        alt={currentStory.music.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    <div className="flex flex-col text-left min-w-0 flex-1">
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs font-bold text-white truncate max-w-[140px]">
+                          {currentStory.music.title}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[11px] text-gray-300 truncate max-w-[120px]">
+                          {currentStory.music.artist}
+                        </span>
+                        {!isMuted && !isPaused && (
+                          <div className="flex items-center gap-0.5 flex-shrink-0">
+                            <span className="w-0.5 h-2 bg-pink-400 animate-pulse rounded-full" />
+                            <span className="w-0.5 h-3 bg-pink-400 animate-pulse delay-75 rounded-full" />
+                            <span className="w-0.5 h-1.5 bg-pink-400 animate-pulse delay-150 rounded-full" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               )}
 
          
@@ -708,6 +833,15 @@ function Story() {
           </div>
         </div>
       )}
+
+      {/* Story Preview & Music Composer Modal */}
+      <StoryComposerModal
+        isOpen={Boolean(composerFile)}
+        file={composerFile}
+        onClose={() => setComposerFile(null)}
+        onPublish={handlePublishComposer}
+        currentUser={userData}
+      />
     </div>
   );
 }

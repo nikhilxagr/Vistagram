@@ -21,15 +21,45 @@ import {
   FiEdit2,
   FiTrash2,
   FiX,
+  FiMusic,
 } from "react-icons/fi";
 import { ClipLoader } from "react-spinners";
 import { toggleLikePost, addCommentToPost, removePost, updatePost } from "../redux/post.Slice";
 import { setUserData } from "../redux/userSlice";
 import ReelShareModal from "./ReelShareModal";
+import CommentsDrawer from "./CommentsDrawer";
 
 function Post({ post }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  const postAudioRef = useRef(new Audio());
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+
+  useEffect(() => {
+    const audio = postAudioRef.current;
+    if (post?.music?.audioUrl) {
+      audio.src = post.music.audioUrl;
+      audio.loop = true;
+    }
+    return () => {
+      audio.pause();
+      audio.src = "";
+    };
+  }, [post?.music?.audioUrl]);
+
+  const togglePostMusic = (e) => {
+    if (e) e.stopPropagation();
+    const audio = postAudioRef.current;
+    if (!audio.src) return;
+    if (isMusicPlaying) {
+      audio.pause();
+      setIsMusicPlaying(false);
+    } else {
+      audio.play().catch((err) => console.log("Audio play error:", err));
+      setIsMusicPlaying(true);
+    }
+  };
 
   const { userData } = useSelector((state) => state.user);
   const currentUserId = userData?._id || userData?.id;
@@ -451,11 +481,34 @@ function Post({ post }) {
               className="w-full h-full object-cover group-hover:scale-105 transition-transform"
             />
           </div>
-          <div className="flex flex-col text-left">
-            <span className="text-xs sm:text-sm font-bold text-white leading-tight hover:text-blue-400 transition">
+          <div className="flex flex-col text-left min-w-0">
+            <span className="text-xs sm:text-sm font-bold text-white leading-tight hover:text-blue-400 transition truncate">
               {authorName}
             </span>
-            <span className="text-[11px] font-medium text-gray-400">@{authorUsername}</span>
+            {post?.music?.title ? (
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePostMusic(e);
+                }}
+                className="flex items-center gap-1 text-[11px] text-pink-400 hover:text-pink-300 font-medium truncate mt-0.5 cursor-pointer"
+                title="Click to play / pause music"
+              >
+                <FiMusic size={11} className={`text-pink-400 flex-shrink-0 ${isMusicPlaying ? "animate-bounce" : ""}`} />
+                <span className="truncate max-w-[150px] sm:max-w-[220px]">
+                  {post.music.title} • {post.music.artist}
+                </span>
+                {isMusicPlaying && (
+                  <div className="flex items-center gap-0.5 ml-1">
+                    <span className="w-0.5 h-2 bg-pink-400 animate-pulse rounded-full" />
+                    <span className="w-0.5 h-3 bg-pink-400 animate-pulse delay-75 rounded-full" />
+                    <span className="w-0.5 h-1.5 bg-pink-400 animate-pulse delay-150 rounded-full" />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <span className="text-[11px] font-medium text-gray-400">@{authorUsername}</span>
+            )}
           </div>
         </div>
 
@@ -604,11 +657,27 @@ function Post({ post }) {
             </div>
           </div>
         ) : (
-          <img
-            src={post?.media}
-            alt={post?.caption || "Vistagram Post"}
-            className="w-full max-h-[620px] object-contain bg-black cursor-pointer"
-          />
+          <div className="relative w-full flex items-center justify-center">
+            <img
+              src={post?.media}
+              alt={post?.caption || "Vistagram Post"}
+              className="w-full max-h-[620px] object-contain bg-black cursor-pointer"
+            />
+            {post?.music?.audioUrl && (
+              <button
+                type="button"
+                onClick={togglePostMusic}
+                className="absolute bottom-3 right-3 z-20 bg-black/65 hover:bg-black/85 text-white p-2 rounded-full backdrop-blur-md transition cursor-pointer flex items-center gap-1 shadow-xl border border-white/10 active:scale-95"
+                title={isMusicPlaying ? "Mute audio" : "Play audio"}
+              >
+                {isMusicPlaying ? (
+                  <FiVolume2 size={16} className="text-pink-400" />
+                ) : (
+                  <FiVolumeX size={16} className="text-gray-300" />
+                )}
+              </button>
+            )}
+          </div>
         )}
       </div>
 
@@ -673,161 +742,28 @@ function Post({ post }) {
         </div>
       )}
 
-      {/* Comments Section */}
-      {showComments && (
-        <div className="px-4 sm:px-5 py-3.5 bg-gray-950/80 border-t border-gray-900 flex flex-col gap-3">
-          <div className="flex flex-col gap-1 max-h-56 overflow-y-auto pr-1">
-            {commentsList.length > 0 ? (
-              commentsList.map((c, idx) => {
-                const commentUser = typeof c.author === "object" && c.author !== null ? c.author : {};
-                const commentAuthorId = (c.author?._id || c.author || "").toString();
-                const isCommentAuthor = currentUserId && commentAuthorId === currentUserId.toString();
-                const isPostAuthor = currentUserId && authorId === currentUserId.toString();
-                const canDelete = isCommentAuthor || isPostAuthor;
-
-                const cUsername = commentUser.username || commentUser.userName || commentUser.name || "user";
-                const cImage = commentUser.profileImage || dp;
-
-                const isCommentLiked = Array.isArray(c.likes) && c.likes.some(
-                  (id) => (id._id || id || "").toString() === (currentUserId || "").toString()
-                );
-                const commentLikesCount = Array.isArray(c.likes) ? c.likes.length : 0;
-
-                return (
-                  <div
-                    key={c._id || idx}
-                    onTouchStart={() => handleCommentPressStart(c)}
-                    onTouchEnd={handleCommentPressEnd}
-                    onMouseDown={() => handleCommentPressStart(c)}
-                    onMouseUp={handleCommentPressEnd}
-                    onMouseLeave={handleCommentPressEnd}
-                    className="group/comment flex items-start justify-between gap-2 text-xs text-left p-1.5 rounded-xl hover:bg-gray-900/50 transition select-none"
-                  >
-                    <div className="flex items-start gap-2.5 flex-1 min-w-0">
-                      <div
-                        onClick={() => navigate(`/profile/${cUsername}`)}
-                        className="w-7 h-7 rounded-full overflow-hidden border border-gray-800 bg-gray-900 flex-shrink-0 cursor-pointer mt-0.5"
-                      >
-                        <img
-                          src={cImage}
-                          alt={cUsername}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex flex-col text-left flex-1 min-w-0">
-                        <span
-                          onClick={() => navigate(`/profile/${cUsername}`)}
-                          className="font-bold text-white cursor-pointer hover:underline text-[12px]"
-                        >
-                          {cUsername}
-                        </span>
-                        <span className="text-gray-200 mt-0.5 break-words text-xs leading-relaxed">{c.message}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 flex-shrink-0 pt-0.5">
-                      {canDelete && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedCommentToDelete(c);
-                          }}
-                          className="opacity-0 group-hover/comment:opacity-100 text-gray-500 hover:text-red-400 p-1 transition cursor-pointer"
-                          title="Delete comment"
-                        >
-                          <FiTrash2 size={13} />
-                        </button>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleLikeComment(c._id);
-                        }}
-                        className="flex flex-col items-center cursor-pointer text-gray-400 hover:text-red-500 transition p-1"
-                        title="Like comment"
-                      >
-                        {isCommentLiked ? (
-                          <FaHeart className="text-red-500 text-[13px] animate-in zoom-in-50 duration-150" />
-                        ) : (
-                          <FaRegHeart className="text-gray-400 hover:text-white text-[13px]" />
-                        )}
-                        {commentLikesCount > 0 && (
-                          <span className="text-[9px] text-gray-400 font-semibold leading-none mt-0.5">
-                            {commentLikesCount}
-                          </span>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <p className="text-xs text-gray-500 py-2">No comments yet. Be the first to comment!</p>
-            )}
-          </div>
-
-          <form onSubmit={handleAddComment} className="flex items-center gap-2 pt-2 border-t border-gray-900">
-            <input
-              type="text"
-              value={commentInput}
-              onChange={(e) => setCommentInput(e.target.value)}
-              placeholder="Add a comment..."
-              className="flex-1 text-xs bg-gray-900 text-white border border-gray-800 rounded-full px-4 py-2 outline-none focus:border-gray-600 transition placeholder-gray-500"
-            />
-            <button
-              type="submit"
-              disabled={!commentInput.trim() || isSubmittingComment}
-              className="text-xs font-bold text-blue-500 hover:text-blue-400 disabled:opacity-40 cursor-pointer px-2"
-            >
-              Post
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* Delete Comment */}
-      {selectedCommentToDelete && (
-        <div
-          className="fixed inset-0 z-[250] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150"
-          onClick={() => setSelectedCommentToDelete(null)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-xs bg-gray-950 border border-gray-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col text-center animate-in zoom-in-95 duration-150"
+      {commentsList.length > 0 && (
+        <div className="px-4 sm:px-5 pb-3.5 text-left">
+          <button
+            type="button"
+            onClick={() => setShowComments(true)}
+            className="text-xs text-gray-400 hover:text-gray-300 font-medium cursor-pointer transition"
           >
-            <div className="p-5 flex flex-col items-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mb-1">
-                <FiTrash2 size={20} />
-              </div>
-              <h3 className="text-sm font-bold text-white">Delete Comment?</h3>
-              <p className="text-xs text-gray-400 leading-relaxed px-2">
-                Are you sure you want to delete this comment? This cannot be undone.
-              </p>
-            </div>
-
-            <div className="flex flex-col border-t border-gray-900 divide-y divide-gray-900">
-              <button
-                type="button"
-                onClick={handleDeleteComment}
-                disabled={isDeletingComment}
-                className="w-full py-3 text-xs font-bold text-red-500 hover:bg-red-500/10 transition cursor-pointer flex items-center justify-center gap-2"
-              >
-                {isDeletingComment ? <ClipLoader size={14} color="#ef4444" /> : "Delete"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedCommentToDelete(null)}
-                className="w-full py-3 text-xs font-semibold text-gray-300 hover:bg-gray-900 transition cursor-pointer"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+            View all {commentsList.length} {commentsList.length === 1 ? "comment" : "comments"}
+          </button>
         </div>
       )}
+
+      <CommentsDrawer
+        isOpen={showComments}
+        onClose={() => setShowComments(false)}
+        postId={post._id}
+        postAuthorId={authorId}
+        comments={commentsList}
+        onCommentsUpdate={(updated) => setCommentsList(updated)}
+        currentUserId={currentUserId}
+        currentUser={userData}
+      />
 
       {/* Edit Caption Modal */}
       {isEditing && (

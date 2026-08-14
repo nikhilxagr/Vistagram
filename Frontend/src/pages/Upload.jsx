@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { FiArrowLeft, FiPlusSquare, FiImage, FiFilm, FiClock } from "react-icons/fi";
+import { FiArrowLeft, FiPlusSquare, FiImage, FiFilm, FiClock, FiMusic, FiTrash2 } from "react-icons/fi";
 import { ClipLoader } from "react-spinners";
 import axios from "axios";
 import { serverUrl } from "../App.jsx";
 import Nav from "../components/Nav";
 import VideoPlayer from "../components/VideoPlayer";
+import StoryMusicPicker from "../components/StoryMusicPicker";
 import { addPost, setPostLoading, setPostError } from "../redux/post.Slice";
 import { addReel, setReelLoading, setReelError } from "../redux/reel.Slice";
 import { addStory, setStoryLoading, setStoryError } from "../redux/story.slice";
@@ -27,6 +28,8 @@ function Upload() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [mediaType, setMediaType] = useState("image");
   const [caption, setCaption] = useState("");
+  const [selectedMusic, setSelectedMusic] = useState(null);
+  const [showMusicPicker, setShowMusicPicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
 
@@ -56,6 +59,7 @@ function Upload() {
   const handleClearFile = () => {
     setSelectedFile(null);
     setPreviewUrl(null);
+    setSelectedMusic(null);
   };
 
   const handleUpload = async (e) => {
@@ -85,6 +89,10 @@ function Upload() {
       formData.append("media", selectedFile);
       formData.append("caption", caption);
       formData.append("mediaType", mediaType);
+
+      if (selectedMusic) {
+        formData.append("music", JSON.stringify(selectedMusic));
+      }
 
       let endpoint = `${serverUrl}/api/posts/upload`;
       if (activeTab === "Story") {
@@ -245,6 +253,64 @@ function Upload() {
               onRemove={handleClearFile}
             />
 
+            <div className="w-full flex flex-col gap-2">
+              {!selectedMusic ? (
+                <button
+                  type="button"
+                  onClick={() => setShowMusicPicker(true)}
+                  className="w-full py-3 px-4 rounded-2xl bg-gray-900 border border-gray-800 hover:border-pink-500/50 hover:bg-gray-850 text-white text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                >
+                  <FiMusic className="text-pink-400" size={16} />
+                  <span>Add Music to {activeTab} (iTunes)</span>
+                </button>
+              ) : (
+                <div className="w-full bg-gradient-to-r from-gray-900 via-gray-900/90 to-gray-950 border border-pink-500/30 rounded-2xl p-3 flex items-center justify-between shadow-lg animate-in fade-in duration-200">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-800 flex-shrink-0 shadow">
+                      <img
+                        src={selectedMusic.coverImage}
+                        alt={selectedMusic.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex flex-col text-left min-w-0 flex-1">
+                      <span className="text-xs font-bold text-white truncate">
+                        {selectedMusic.title}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] text-gray-400 truncate">
+                          {selectedMusic.artist}
+                        </span>
+                        <div className="flex items-center gap-0.5">
+                          <span className="w-0.5 h-2 bg-pink-400 animate-pulse rounded-full" />
+                          <span className="w-0.5 h-3 bg-pink-400 animate-pulse delay-75 rounded-full" />
+                          <span className="w-0.5 h-1.5 bg-pink-400 animate-pulse delay-150 rounded-full" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowMusicPicker(true)}
+                      className="text-xs font-bold text-pink-400 hover:underline px-2 cursor-pointer"
+                    >
+                      Change
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedMusic(null)}
+                      className="p-1.5 text-gray-400 hover:text-red-400 rounded-full hover:bg-gray-800 transition cursor-pointer"
+                      title="Remove song"
+                    >
+                      <FiTrash2 size={15} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {activeTab !== "Story" && (
               <div className="w-full flex flex-col gap-1.5">
                 <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">
@@ -275,6 +341,14 @@ function Upload() {
         )}
       </main>
       <Nav />
+
+      {/* Music Picker Modal */}
+      <StoryMusicPicker
+        isOpen={showMusicPicker}
+        onClose={() => setShowMusicPicker(false)}
+        onSelectSong={(song) => setSelectedMusic(song)}
+        selectedSong={selectedMusic}
+      />
     </div>
   );
 }

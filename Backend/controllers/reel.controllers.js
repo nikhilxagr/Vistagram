@@ -6,7 +6,7 @@ import fs from "fs";
 
 export const uploadReel = async (req, res) => {
   try {
-    const { caption } = req.body;
+    const { caption, music } = req.body;
     let mediaUrl;
 
     if (req.file) {
@@ -18,11 +18,21 @@ export const uploadReel = async (req, res) => {
 
     const userId = req.userId || req.user?._id;
 
+    let musicData = null;
+    if (music) {
+      try {
+        musicData = typeof music === "string" ? JSON.parse(music) : music;
+      } catch (err) {
+        console.log("Could not parse reel music:", err);
+      }
+    }
+
     const reel = await Post.create({
       caption,
       media: mediaUrl,
       mediaType: "video",
       author: userId,
+      ...(musicData ? { music: musicData } : {}),
     });
 
     const user = await User.findById(userId);
