@@ -262,10 +262,40 @@ export const search = async (req, res) => {
 export const getAllNotifications = async (req, res) => {
   try {
     const userId = req.userId || req.user?._id;
-    const notifications = await Notification.find({ receiver: userId })
+    const rawNotifications = await Notification.find({ receiver: userId })
       .populate("sender", "name username profileImage")
       .populate("post", "media mediaType caption")
+      .populate("reel", "media caption")
+      .populate("story", "media mediaType")
       .sort({ createdAt: -1 });
+
+    const seen = new Set();
+    const notifications = [];
+    const duplicateIdsToDelete = [];
+
+    for (const notif of rawNotifications) {
+      const senderId = (notif.sender?._id || notif.sender || "").toString();
+      const targetId = (
+        notif.post?._id || notif.post ||
+        notif.reel?._id || notif.reel ||
+        notif.story?._id || notif.story ||
+        ""
+      ).toString();
+      const key = `${senderId}_${notif.type}_${targetId}`;
+
+      if (seen.has(key)) {
+        duplicateIdsToDelete.push(notif._id);
+      } else {
+        seen.add(key);
+        notifications.push(notif);
+      }
+    }
+
+    if (duplicateIdsToDelete.length > 0) {
+      Notification.deleteMany({ _id: { $in: duplicateIdsToDelete } }).catch((err) =>
+        console.error("Cleanup duplicate notifications error:", err)
+      );
+    }
 
     return res.status(200).json({ notifications });
   } catch (error) {

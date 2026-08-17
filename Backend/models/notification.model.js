@@ -30,6 +30,10 @@ const notificationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Reel"
     },
+    story: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Story"
+    },
     isRead: {
       type: Boolean,
       default: false

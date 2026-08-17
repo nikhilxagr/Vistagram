@@ -25,6 +25,38 @@ const storySlice = createSlice({
         story.viewers = [...(story.viewers || []), userId];
       }
     },
+    toggleLikeStory: (state, action) => {
+      const { storyId, userId } = action.payload;
+      const story = state.stories.find((s) => s._id === storyId);
+      if (story) {
+        story.likes = story.likes || [];
+        const exists = story.likes.some((id) => (id._id || id).toString() === userId.toString());
+        if (exists) {
+          story.likes = story.likes.filter((id) => (id._id || id).toString() !== userId.toString());
+        } else {
+          story.likes.push(userId);
+        }
+      }
+      if (state.activeStory && state.activeStory._id === storyId) {
+        state.activeStory.likes = state.activeStory.likes || [];
+        const exists = state.activeStory.likes.some((id) => (id._id || id).toString() === userId.toString());
+        if (exists) {
+          state.activeStory.likes = state.activeStory.likes.filter((id) => (id._id || id).toString() !== userId.toString());
+        } else {
+          state.activeStory.likes.push(userId);
+        }
+      }
+    },
+    updateStoryLikes: (state, action) => {
+      const { storyId, likes } = action.payload;
+      const story = state.stories.find((s) => s._id === storyId);
+      if (story) {
+        story.likes = likes;
+      }
+      if (state.activeStory && state.activeStory._id === storyId) {
+        state.activeStory.likes = likes;
+      }
+    },
     setActiveStory: (state, action) => {
       state.activeStory = action.payload;
     },
@@ -47,6 +79,8 @@ export const {
   addStory,
   removeStory,
   markStoryViewed,
+  toggleLikeStory,
+  updateStoryLikes,
   setActiveStory,
   setStoryLoading,
   setStoryError,

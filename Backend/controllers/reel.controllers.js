@@ -2,6 +2,7 @@ import uploadOnCloudinary from "../config/cloudinary.js";
 import Post from "../models/post.model.js";
 import User from "../models/user.model.js";
 import Notification from "../models/notification.model.js";
+import { getReceiverSocketId, io } from "../socket.js";
 import fs from "fs";
 
 export const uploadReel = async (req, res) => {
@@ -69,30 +70,48 @@ export const like = async (req, res) => {
       reel.likes = reel.likes.filter(
         (id) => id.toString() !== userId.toString()
       );
+
+      // Clean up like notification on unlike
+      if (reel.author.toString() !== userId.toString()) {
+        const deletedNotif = await Notification.findOneAndDelete({
+          sender: userId,
+          receiver: reel.author,
+          type: "like",
+          reel: reel._id,
+        });
+
+        const receiverSocketId = getReceiverSocketId(reel.author.toString());
+        if (receiverSocketId) {
+          io.to(receiverSocketId).emit("removeNotification", {
+            notificationId: deletedNotif?._id?.toString(),
+            senderId: userId.toString(),
+            type: "like",
+            reelId: reel._id.toString(),
+          });
+        }
+      }
     } else {
       reel.likes = reel.likes || [];
       reel.likes.push(userId);
-         if (reel.author.toString() !== userId.toString()) {
-           const notification = await Notification.create({
-             sender: req.userId || req.user?._id,
-             receiver: reel.author._id,
-             type: "like",
-             reel: reel._id,
-             message: `${req.user.name} liked your reel.`,
-           });
+      if (reel.author.toString() !== userId.toString()) {
+        const sender = await User.findById(userId).select("name username profileImage");
+        const notification = await Notification.findOneAndUpdate(
+          { sender: userId, receiver: reel.author, type: "like", reel: reel._id },
+          {
+            $set: {
+              isRead: false,
+              message: `${sender?.name || sender?.username || "Someone"} liked your reel.`,
+            },
+          },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        ).populate("sender", "name username profileImage")
+          .populate("reel", "media caption");
 
-           const populatedNotification = await Notification.findById(
-             notification._id,
-           ).populate("sender", "name username profileImage");
-
-           const receiverSocketId = getSocketId(reel.author._id.toString());
-           if (receiverSocketId) {
-             io.to(receiverSocketId).emit(
-               "newNotification",
-               populatedNotification,
-             );
-           }
-         }
+        const receiverSocketId = getReceiverSocketId(reel.author.toString());
+        if (receiverSocketId) {
+          io.to(receiverSocketId).emit("newNotification", notification);
+        }
+      }
     }
     await reel.save();
     return res.status(200).json({

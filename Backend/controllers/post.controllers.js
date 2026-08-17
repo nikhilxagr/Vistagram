@@ -152,10 +152,30 @@ export const likePost = async (req, res) => {
     const alreadyLiked = post.likes.some((id) => id.toString() === userId.toString());
     if (alreadyLiked) {
       post.likes = post.likes.filter((id) => id.toString() !== userId.toString());
+
+      // Clean up like notification on unlike
+      if (post.author.toString() !== userId.toString()) {
+        const deletedNotif = await Notification.findOneAndDelete({
+          sender: userId,
+          receiver: post.author,
+          type: "like",
+          post: post._id,
+        });
+
+        const receiverSocketId = getReceiverSocketId(post.author.toString());
+        if (receiverSocketId) {
+          io.to(receiverSocketId).emit("removeNotification", {
+            notificationId: deletedNotif?._id?.toString(),
+            senderId: userId.toString(),
+            type: "like",
+            postId: post._id.toString(),
+          });
+        }
+      }
     } else {
       post.likes.push(userId);
       if (post.author.toString() !== userId.toString()) {
-        const sender = await User.findById(userId).select("name username");
+        const sender = await User.findById(userId).select("name username profileImage");
        
         const notification = await Notification.findOneAndUpdate(
           { sender: userId, receiver: post.author, type: "like", post: post._id },

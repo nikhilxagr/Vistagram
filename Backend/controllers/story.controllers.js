@@ -1,6 +1,8 @@
 import User from "../models/user.model.js";
 import Story from "../models/story.model.js";
+import Notification from "../models/notification.model.js";
 import uploadOnCloudinary from "../config/cloudinary.js";
+import { getReceiverSocketId, io } from "../socket.js";
 import fs from "fs";
 
 export const uploadStory = async (req, res) => {
@@ -49,10 +51,10 @@ export const uploadStory = async (req, res) => {
     user.stories.push(story._id);
     await user.save();
 
-    const populatedStory = await Story.findById(story._id).populate(
-      "author",
-      "name username profileImage"
-    );
+    const populatedStory = await Story.findById(story._id)
+      .populate("author", "name username profileImage")
+      .populate("viewers", "name username profileImage")
+      .populate("likes", "name username profileImage");
 
     return res.status(201).json({ message: "Story uploaded successfully", story: populatedStory });
   } catch (error) {
@@ -88,7 +90,8 @@ export const viewStory = async (req, res) => {
 
     const populatedStory = await Story.findById(storyId)
       .populate("author", "name username profileImage")
-      .populate("viewers", "name username profileImage");
+      .populate("viewers", "name username profileImage")
+      .populate("likes", "name username profileImage");
     return res.status(200).json(populatedStory);
   } catch (error) {
     return res.status(500).json({ message: "Error viewing story", error: error.message });
@@ -108,10 +111,103 @@ export const getStoryByUserName = async (req, res) => {
     }
     const populatedStory = await Story.findById(story._id)
       .populate("author", "name username profileImage")
-      .populate("viewers", "name username profileImage");
+      .populate("viewers", "name username profileImage")
+      .populate("likes", "name username profileImage");
     return res.status(200).json(populatedStory);
   } catch (error) {
     return res.status(500).json({ message: "Error fetching story", error: error.message });
+  }
+};
+
+export const likeStory = async (req, res) => {
+  try {
+    const storyId = req.params.storyId;
+    const userId = req.userId || req.user?._id;
+
+    const story = await Story.findById(storyId);
+    if (!story) {
+      return res.status(404).json({ message: "Story not found" });
+    }
+
+    story.likes = story.likes || [];
+    const alreadyLiked = story.likes.some(
+      (id) => (id._id || id).toString() === userId.toString()
+    );
+
+    if (alreadyLiked) {
+      story.likes = story.likes.filter(
+        (id) => (id._id || id).toString() !== userId.toString()
+      );
+
+      // Clean up like notification on unlike
+      const storyAuthorId = (story.author?._id || story.author || "").toString();
+      if (storyAuthorId !== userId.toString()) {
+        const deletedNotif = await Notification.findOneAndDelete({
+          sender: userId,
+          receiver: story.author,
+          type: "like",
+          story: story._id,
+        });
+
+        const receiverSocketId = getReceiverSocketId(storyAuthorId);
+        if (receiverSocketId) {
+          io.to(receiverSocketId).emit("removeNotification", {
+            notificationId: deletedNotif?._id?.toString(),
+            senderId: userId.toString(),
+            type: "like",
+            storyId: story._id.toString(),
+          });
+        }
+      }
+    } else {
+      story.likes.push(userId);
+
+      const storyAuthorId = (story.author?._id || story.author || "").toString();
+      if (storyAuthorId !== userId.toString()) {
+        const sender = await User.findById(userId).select("name username profileImage");
+        const notification = await Notification.findOneAndUpdate(
+          { sender: userId, receiver: story.author, type: "like", story: story._id },
+          {
+            $set: {
+              isRead: false,
+              message: `${sender?.name || sender?.username || "Someone"} liked your story.`,
+            },
+          },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        ).populate("sender", "name username profileImage");
+
+        const receiverSocketId = getReceiverSocketId(storyAuthorId);
+        if (receiverSocketId) {
+          io.to(receiverSocketId).emit("newNotification", notification);
+        }
+      }
+    }
+
+    await story.save();
+
+    if (io) {
+      io.emit("storyLiked", {
+        storyId: story._id.toString(),
+        userId: userId.toString(),
+        likes: story.likes.map((id) => (id._id || id).toString()),
+      });
+    }
+
+    const populatedStory = await Story.findById(storyId)
+      .populate("author", "name username profileImage")
+      .populate("viewers", "name username profileImage")
+      .populate("likes", "name username profileImage");
+
+    return res.status(200).json({
+      message: "Story like toggled successfully",
+      story: populatedStory,
+      likes: story.likes,
+      likesCount: story.likes.length,
+      isLiked: !alreadyLiked,
+    });
+  } catch (error) {
+    console.error("Error in likeStory:", error);
+    return res.status(500).json({ message: "Error liking story", error: error.message });
   }
 };
 
@@ -169,12 +265,14 @@ export const getAllStories = async (req, res) => {
     let stories = await Story.find(query)
       .populate("author", "name username profileImage")
       .populate("viewers", "name username profileImage")
+      .populate("likes", "name username profileImage")
       .sort({ createdAt: -1 });
 
     if (!stories || stories.length === 0) {
       stories = await Story.find({ createdAt: { $gte: twentyFourHoursAgo } })
         .populate("author", "name username profileImage")
         .populate("viewers", "name username profileImage")
+        .populate("likes", "name username profileImage")
         .sort({ createdAt: -1 });
     }
 

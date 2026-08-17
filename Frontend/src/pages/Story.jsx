@@ -5,9 +5,10 @@ import axios from "axios";
 import { serverUrl } from "../App";
 import dp from "../assets/dp.png";
 import useGetAllStories from "../hooks/getAllStories";
-import { addStory, removeStory } from "../redux/story.slice";
+import { addStory, removeStory, toggleLikeStory } from "../redux/story.slice";
 import { setUserData } from "../redux/userSlice";
 import { ClipLoader } from "react-spinners";
+import { FaHeart, FaRegHeart } from "react-icons/fa6";
 import {
   FiArrowLeft,
   FiX,
@@ -36,6 +37,7 @@ function Story() {
   const fileInputRef = useRef(null);
   const storyVideoRef = useRef(null);
   const storyMusicAudioRef = useRef(new Audio());
+  const lastTapRef = useRef(0);
 
   const [composerFile, setComposerFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -43,6 +45,7 @@ function Story() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [showHeartPop, setShowHeartPop] = useState(false);
 
   const currentUserId = (userData?._id || userData?.id)?.toString();
 
@@ -400,6 +403,32 @@ function Story() {
     }
   };
 
+  const isCurrentStoryLiked = React.useMemo(() => {
+    if (!currentStory?.likes || !currentUserId) return false;
+    return currentStory.likes.some(
+      (id) => (id._id || id || "").toString() === currentUserId.toString()
+    );
+  }, [currentStory?.likes, currentUserId]);
+
+  const handleLikeStory = async (e) => {
+    if (e) e.stopPropagation();
+    if (!currentStory?._id || !currentUserId) return;
+
+    dispatch(toggleLikeStory({ storyId: currentStory._id, userId: currentUserId }));
+    setShowHeartPop(true);
+    setTimeout(() => setShowHeartPop(false), 900);
+
+    try {
+      await axios.put(
+        `${serverUrl}/api/story/${currentStory._id}/like`,
+        {},
+        { withCredentials: true }
+      );
+    } catch (err) {
+      console.error("Error liking story:", err);
+      dispatch(toggleLikeStory({ storyId: currentStory._id, userId: currentUserId }));
+    }
+  };
 
   return (
     <div className="w-full h-screen bg-black text-white relative overflow-hidden flex flex-col items-center justify-center select-none">
@@ -585,6 +614,18 @@ function Story() {
                 />
               )}
 
+              
+              {showHeartPop && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30 animate-in zoom-in duration-200">
+                  <div className="relative flex items-center justify-center">
+                    <FaHeart className="text-red-500 text-8xl drop-shadow-[0_0_30px_rgba(239,68,68,0.9)] animate-bounce" />
+                    <div className="absolute inset-0 flex items-center justify-center animate-ping opacity-60 pointer-events-none">
+                      <FaHeart className="text-red-500 text-8xl" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Positioned Instagram Music Sticker */}
               {currentStory?.music?.title && currentStory?.music?.stickerPos && (
                 <div
@@ -662,6 +703,12 @@ function Story() {
                     >
                       <FiEye size={16} />
                       <span>{filteredViewers.length} Viewers</span>
+                      {currentStory?.likes && currentStory.likes.length > 0 && (
+                        <div className="flex items-center gap-1 ml-1 text-red-400 font-bold">
+                          <FaHeart size={11} className="text-red-500" />
+                          <span>{currentStory.likes.length}</span>
+                        </div>
+                      )}
                     </button>
 
                     <button
@@ -674,16 +721,36 @@ function Story() {
                     </button>
                   </div>
                 ) : (
-                  <div className="flex-1 flex items-center gap-2 bg-black/60 backdrop-blur-md border border-gray-800 rounded-full px-4 py-2 text-white">
-                    <input
-                      type="text"
-                      placeholder={`Send message to ${
-                        currentGroup?.author?.username || "user"
-                      }...`}
-                      className="flex-1 bg-transparent text-xs outline-none text-white placeholder-gray-400"
-                    />
-                    <button className="text-blue-500 hover:text-blue-400 p-1 cursor-pointer">
-                      <FiSend size={16} />
+                  <div className="flex-1 flex items-center gap-2">
+                    <div className="flex-1 flex items-center gap-2 bg-black/60 backdrop-blur-md border border-gray-800 rounded-full px-4 py-2 text-white">
+                      <input
+                        type="text"
+                        placeholder={`Send message to ${
+                          currentGroup?.author?.username || "user"
+                        }...`}
+                        className="flex-1 bg-transparent text-xs outline-none text-white placeholder-gray-400"
+                      />
+                      <button className="text-blue-500 hover:text-blue-400 p-1 cursor-pointer">
+                        <FiSend size={16} />
+                      </button>
+                    </div>
+
+                    {/* Story Like Heart Button */}
+                    <button
+                      onClick={handleLikeStory}
+                      className={`p-2.5 rounded-full backdrop-blur-md border transition cursor-pointer active:scale-90 flex-shrink-0 shadow-lg ${
+                        isCurrentStoryLiked
+                          ? "bg-red-500/20 border-red-500/40 text-red-500 hover:bg-red-500/30"
+                          : "bg-black/60 border-gray-800 text-white hover:bg-black/80 hover:text-red-400"
+                      }`}
+                      title={isCurrentStoryLiked ? "Unlike Story" : "Like Story"}
+                      aria-label="Like Story"
+                    >
+                      {isCurrentStoryLiked ? (
+                        <FaHeart size={19} className="text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.6)] animate-in zoom-in-75 duration-150" />
+                      ) : (
+                        <FaRegHeart size={19} />
+                      )}
                     </button>
                   </div>
                 )}
@@ -696,12 +763,23 @@ function Story() {
               <div className="flex items-center justify-between pb-3 border-b border-gray-900">
                 <div
                   onClick={() => setShowViewersModal(false)}
-                  className="flex items-center gap-2 cursor-pointer group"
+                  className="flex items-center gap-3 cursor-pointer group"
                 >
-                  <FiEye size={16} className="text-white" />
-                  <span className="text-xs font-semibold text-white tracking-wide">
-                    {filteredViewers.length} Viewers
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <FiEye size={16} className="text-white" />
+                    <span className="text-xs font-semibold text-white tracking-wide">
+                      {filteredViewers.length} Viewers
+                    </span>
+                  </div>
+
+                  {currentStory?.likes && currentStory.likes.length > 0 && (
+                    <div className="flex items-center gap-1.5 bg-red-500/15 border border-red-500/30 px-2.5 py-0.5 rounded-full shadow-sm">
+                      <FaHeart size={11} className="text-red-500" />
+                      <span className="text-xs font-bold text-red-400">
+                        {currentStory.likes.length} Likes
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -729,34 +807,55 @@ function Story() {
                 {filteredViewers && filteredViewers.length > 0 ? (
                   filteredViewers.map((viewer, idx) => {
                     const vUser = typeof viewer === "object" ? viewer : {};
+                    const vId = (vUser._id || vUser.id || viewer)?.toString();
                     const vName = vUser.name || vUser.username || "User";
                     const vUsername = vUser.username || "user";
                     const vImage = vUser.profileImage || dp;
 
+                    const hasLiked = currentStory?.likes?.some(
+                      (id) => (id._id || id || "").toString() === (vId || "").toString()
+                    );
+
                     return (
                       <div
-                        key={vUser._id || idx}
+                        key={vId || idx}
                         onClick={() => {
                           setShowViewersModal(false);
                           navigate(`/profile/${vUsername}`);
                         }}
-                        className="flex items-center gap-3 py-2 px-1 cursor-pointer group hover:bg-gray-900/60 rounded-xl transition"
+                        className="flex items-center justify-between py-2 px-1 cursor-pointer group hover:bg-gray-900/60 rounded-xl transition"
                       >
-                        <div className="w-9 h-9 rounded-full overflow-hidden border border-gray-800 bg-gray-950 flex-shrink-0 group-hover:scale-105 transition">
-                          <img
-                            src={vImage}
-                            alt={vUsername}
-                            className="w-full h-full object-cover"
-                          />
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="relative w-9 h-9 rounded-full flex-shrink-0">
+                            <img
+                              src={vImage}
+                              alt={vUsername}
+                              className="w-full h-full rounded-full object-cover border border-gray-800 group-hover:scale-105 transition"
+                            />
+                            {hasLiked && (
+                              <div className="absolute -bottom-1 -right-1 bg-black rounded-full p-0.5">
+                                <div className="bg-red-500 rounded-full p-0.5 shadow">
+                                  <FaHeart size={8} className="text-white" />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex flex-col text-left justify-center min-w-0">
+                            <span className="text-xs font-bold text-white leading-tight group-hover:underline truncate">
+                              {vName}
+                            </span>
+                            <span className="text-[11px] text-gray-400 font-medium leading-none mt-0.5 truncate">
+                              @{vUsername}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex flex-col text-left justify-center">
-                          <span className="text-xs font-bold text-white leading-tight group-hover:underline">
-                            {vName}
-                          </span>
-                          <span className="text-[11px] text-gray-400 font-medium leading-none mt-0.5">
-                            @{vUsername}
-                          </span>
-                        </div>
+
+                        {hasLiked && (
+                          <div className="flex items-center gap-1 text-red-500 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-full text-[11px] font-semibold flex-shrink-0 ml-2">
+                            <FaHeart size={10} className="text-red-500" />
+                            <span>Liked</span>
+                          </div>
+                        )}
                       </div>
                     );
                   })

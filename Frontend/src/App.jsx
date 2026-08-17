@@ -23,7 +23,8 @@ import PostDetail from "./pages/PostDetail";
 import useGetCurrentUser from "./hooks/useGetCurrentUser";
 import { setSocket, setOnlineUsers } from "./redux/socket.Slice";
 import { setPostLikes, setPostComments } from "./redux/post.Slice";
-import { addNotification, setNotifications } from "./redux/notification.Slice";
+import { addNotification, removeNotification, setNotifications } from "./redux/notification.Slice";
+import { updateStoryLikes } from "./redux/story.slice";
 
 export const serverUrl = import.meta.env.VITE_SERVER_URL || "http://localhost:8000";
 
@@ -69,12 +70,20 @@ function App() {
         dispatch(setPostLikes(data));
       });
 
+      socketIo.on("storyLiked", (data) => {
+        dispatch(updateStoryLikes(data));
+      });
+
       socketIo.on("commentAdded", (data) => {
         dispatch(setPostComments(data));
       });
 
       socketIo.on("newNotification", (notification) => {
         dispatch(addNotification(notification));
+      });
+
+      socketIo.on("removeNotification", (data) => {
+        dispatch(removeNotification(data));
       });
 
       return () => {
