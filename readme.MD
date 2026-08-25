@@ -1,10 +1,10 @@
 <div align="center">
 
-![Header](https://capsule-render.vercel.app/api?type=waving&color=0:00C2FF,100:00E5A8&height=220&section=header&text=Vistagram%20%7C%20Social%20Media&fontSize=48&fontColor=ffffff&animation=fadeIn&fontAlignY=35&desc=Full%20Stack%20%7C%20Posts%20%7C%20Reels%20%7C%20Stories%20%7C%20iTunes%20Music%20%7C%20Real-Time%20Chat&descAlignY=56&descSize=18)
+![Header](https://capsule-render.vercel.app/api?type=waving&color=0:833AB4,25:E1306C,50:F77737,75:FCAF45,100:FFDC80&height=220&section=header&text=Vistagram%20%7C%20Social%20Media&fontSize=48&fontColor=ffffff&animation=fadeIn&fontAlignY=35&desc=By%20Nikhil%20Agrahari%20%7C%20Posts%20%7C%20Reels%20%7C%20Stories%20%7C%20iTunes%20Music%20%7C%20Chat&descAlignY=56&descSize=18)
 
-<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&duration=2400&pause=900&color=00C2FF&center=true&vCenter=true&width=900&lines=Stories+with+iTunes+Music+%2B+Draggable+Stickers;Posts+%2B+Reels+%2B+Bottom-Sheet+Comments;Real-Time+Chat+%2B+Notifications+via+Socket.io;React+19+%2B+Node.js+%2B+Express+5+%2B+MongoDB" alt="Typing animation" />
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&duration=2400&pause=900&color=00C2FF&center=true&vCenter=true&width=900&lines=Nikhil+Projects+%7C+Vistagram+Full-Stack+Platform;Stories+with+iTunes+Music+%2B+Draggable+Stickers;Reels+%2B+Bottom-Sheet+Comments+%2B+Story+Likes;Real-Time+Chat+%2B+Push+Notifications+via+Socket.io;React+19+%2B+Node.js+%2B+Express+5+%2B+MongoDB+Atlas" alt="Typing animation" />
 
-### Next-generation social platform for sharing moments, reels, stories with background music, and real-time messaging
+### Next-generation social platform engineered by Nikhil Agrahari — sharing moments, reels, stories with background music, and real-time messaging
 
 <br/>
 
@@ -12,6 +12,7 @@
 [![Download Android APK](https://img.shields.io/badge/Download-Android%20APK%20(v1.0.0)-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/nikhilxagr/Vistagram/raw/main/Vistagram.apk)
 [![Backend API](https://img.shields.io/badge/Backend-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://vistagram-backend-zwgy.onrender.com)
 [![GitHub Release](https://img.shields.io/badge/Release-v1.0.0-00C2FF?style=for-the-badge&logo=github&logoColor=white)](https://github.com/nikhilxagr/Vistagram/releases/tag/v1.0.0)
+[![Google Verified](https://img.shields.io/badge/Google%20Search%20Console-Verified-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://myvistagram.vercel.app/)
 
 <br/>
 
@@ -23,6 +24,19 @@
 ![Auth](https://img.shields.io/badge/Auth-JWT%20%2B%20HTTP--Only%20Cookies-F57C00?style=for-the-badge)
 
 </div>
+
+---
+
+## 🔍 SEO & Project Overview
+
+| Property | Details |
+|---|---|
+| **Project Title** | **Vistagram** (Nikhil Vistagram) |
+| **Developer** | **[Nikhil Agrahari](https://github.com/nikhilxagr)** |
+| **Primary Domain** | [https://myvistagram.vercel.app/](https://myvistagram.vercel.app/) |
+| **SEO Keywords** | `Nikhil Projects`, `Nikhil Vistagram`, `Nikhil Agrahari`, `Vistagram`, `Vistagram App`, `Social Media App`, `Instagram Clone`, `MERN Stack Social Media`, `React 19 Social Media`, `Stories with iTunes Music`, `Reels Feed`, `Real-Time Socket.io Chat`, `Download Vistagram APK` |
+| **Search Engine Verification** | Google Search Console Verified via `google9bbde200def3b1f2.html` & Meta Tag |
+| **Indexing Assets** | [`sitemap.xml`](https://myvistagram.vercel.app/sitemap.xml) & [`robots.txt`](https://myvistagram.vercel.app/robots.txt) |
 
 ---
 
@@ -55,30 +69,43 @@ Get the **100% full-screen native Android application** without any browser addr
 ## 🌟 Key Features
 
 ### 🎵 1. Story Music Integration (Apple iTunes Search API)
-- **Live Song Search**: Search millions of songs across Bollywood, Pop Hits, Romantic, Punjabi, and Lofi categories.
-- **Audio Previews**: Tap `▶️` to preview 30-second audio snippets with animated soundwave visualizers before adding.
-- **🖐️ Draggable Movable Stickers**: Drag and reposition the album cover song sticker anywhere on your story (supports touch and mouse dragging).
+- **Live Song Search**: Search millions of tracks across Bollywood, Pop Hits, Romantic, Punjabi, and Lofi categories.
+- **Audio Previews**: Tap `▶️` to preview 30-second audio snippets with animated soundwave visualizers before publishing.
+- **🖐️ Draggable Movable Stickers**: Drag and reposition the album cover song sticker anywhere on your story canvas (Mouse & Touch supported).
 - **⏱️ Duration Selection**: Switch between **15s** and **30s** story playback timers with one tap.
-- **Synced Background Player**: Stories stream background audio in sync with the progress bar, automatically pausing on screen hold and muting/unmuting with volume controls.
+- **Synced Background Player**: Stories stream background audio in sync with progress bars, automatically pausing on screen hold and muting/unmuting with volume controls.
 
-### 📸 2. Posts & Reels with Music
+### ❤️ 2. Story Liking & Viewer List Badges
+- **Dedicated Heart Button**: Tap the heart button (`FaHeart` / `FaRegHeart`) in the bottom action bar to like or unlike stories.
+- **Micro-Animations**: Instant glowing red heart pop animations upon liking.
+- **Story Viewers List**:
+  - Displays total likes counter in the header (`👁️ X Viewers  ❤️ Y Likes`).
+  - Viewers who liked your story show a red heart avatar badge and a **`❤️ Liked`** chip.
+- **Real-Time Sync**: Instant WebSocket broadcasting (`storyLiked`) keeps all viewers and authors in sync.
+
+### 📸 3. Posts & Reels with Background Music
 - **Music on Posts & Reels**: Attach background audio from iTunes to any photo, video post, or reel.
 - **Header Audio Ticker**: Displays `🎵 Song Title • Artist` with live animated equalizer soundbars (`ılılı`).
 - **Interactive Audio Toggle**: Tap the floating volume button (`🔊 / 🔇`) on photo posts to stream attached audio.
 - **Full-Screen Reels Feed**: Vertical smooth snap scrolling, double-tap heart pop animations, spinning vinyl disc ticker, and seek scrubber.
 
-### 💬 3. Instagram-Style Bottom Sheet Comments Drawer
+### 💬 4. Instagram-Style Bottom Sheet Comments Drawer
 - **Smooth Spring Slide-Up Drawer**: Dark glassmorphic backdrop (`#121212`) with drag pill handle.
 - **⚡ Quick Emoji Reaction Bar**: One-tap emoji reactions (`❤️ 🙌 🔥 👏 😢 😍 😮 😂`) directly into the input.
 - **Author Badges & Replies**: Dedicated `Author` badge and one-tap `@username` mention replies.
 - **Heart Likes & Long-Press Deletion**: Heart like counters with live state updates, and long-press (500ms) delete dialog for comment owners.
 
-### ⚡ 4. Real-Time Chat & Live Notifications (Socket.IO)
+### 🛡️ 5. Smart Notification Deduplication & Spam Prevention
+- **Auto-Delete on Unlike**: Unliking a post, reel, or story automatically deletes the like notification from MongoDB and emits `removeNotification` over Socket.IO.
+- **In-Memory Deduplication**: Redux state deduplicates notifications so the drawer never displays repeated stacked cards from the same user.
+- **Ghost Notification Cleanup**: Database auto-cleans any historic duplicate rows on load.
+
+### ⚡ 6. Real-Time Chat & Live Notifications (Socket.IO)
 - **1-on-1 Direct Messaging**: Real-time chatting powered by WebSockets with online/offline indicators.
 - **Media in Messages**: Send photos and videos directly in direct message conversations.
 - **Push Notification Alerts**: Live notification badges and alerts for new likes, comments, and followers.
 
-### 🔒 5. Authentication & User Profiles
+### 🔒 7. Authentication & User Profiles
 - **Secure JWT Auth**: HTTP-only cookies with `bcryptjs` password hashing and protected routing middleware.
 - **Email OTP Verification**: 6-digit OTP code verification for signup and password resets powered by Nodemailer.
 - **Profile Customization**: Update profile avatar, name, username, and bio.
@@ -95,6 +122,7 @@ Get the **100% full-screen native Android application** without any browser addr
 - **React Icons** + **React Spinners**
 - **Axios** (With cookie credential support)
 - **PWA** (`manifest.json`, `sw.js`, `.well-known/assetlinks.json`)
+- **SEO Suite** (Google Search Console Verification, OpenGraph, Twitter Cards, Schema.org JSON-LD)
 
 ### Backend
 - **Node.js** + **Express 5** (ES Modules)
@@ -115,6 +143,9 @@ Vistagram/
 │
 ├── Frontend/
 │   ├── public/
+│   │   ├── google9bbde200def3b1f2.html # Google Search Console HTML Verification
+│   │   ├── sitemap.xml              # XML Sitemap for Google Crawler Indexing
+│   │   ├── robots.txt               # Search Engine Crawling Instructions
 │   │   ├── manifest.json            # PWA Standalone & Fullscreen manifest
 │   │   ├── sw.js                    # Offline Service Worker cache
 │   │   ├── Vistagram.apk            # Direct hosted APK mirror
@@ -132,13 +163,13 @@ Vistagram/
 │   │   │   └── LeftHome.jsx         # Desktop sidebar navigation
 │   │   ├── pages/
 │   │   │   ├── Home.jsx             # Main application feed container
-│   │   │   ├── Story.jsx            # 24h story viewer with synced iTunes audio
+│   │   │   ├── Story.jsx            # 24h story viewer with synced iTunes audio & likes
 │   │   │   ├── Reels.jsx            # Vertical video reels feed
 │   │   │   ├── Upload.jsx           # Unified Post / Reel / Story upload studio
 │   │   │   ├── Messages.jsx         # Real-time chat list & conversation area
 │   │   │   ├── Profile.jsx          # User profile with posts, saved, reels tabs
 │   │   │   └── Notifications.jsx    # Real-time activity notifications
-│   │   ├── redux/                   # Redux Toolkit slices (user, post, reel, story)
+│   │   ├── redux/                   # Redux Toolkit slices (user, post, reel, story, socket)
 │   │   └── App.jsx                  # Main router setup & socket listeners
 │   └── package.json
 │
@@ -150,14 +181,15 @@ Vistagram/
     │   ├── auth.controllers.js      # Auth, OTP verification, password reset
     │   ├── post.controllers.js      # Post creation with music, likes, comments
     │   ├── reel.controllers.js      # Reel creation with music, likes, comments
-    │   ├── story.controllers.js     # Story creation with music, iTunes proxy
+    │   ├── story.controllers.js     # Story creation with music, iTunes proxy, likes
     │   ├── message.controllers.js   # Real-time direct messaging
-    │   └── user.controllers.js      # Profile fetch, follow/unfollow
+    │   └── user.controllers.js      # Profile fetch, follow/unfollow, notifications
     ├── models/
     │   ├── user.model.js
     │   ├── post.model.js            # Includes music sub-schema
     │   ├── reel.model.js            # Includes music sub-schema
-    │   ├── story.model.js           # Includes music sub-schema + 24h TTL index
+    │   ├── story.model.js           # Includes music sub-schema + 24h TTL + likes
+    │   ├── notification.model.js    # Notification schema with deduplication index
     │   └── message.model.js
     ├── routes/                      # Express route definitions
     ├── socket.js                    # Socket.IO connection & event handlers
@@ -239,6 +271,7 @@ Visit **`http://localhost:5173`** in your browser!
 | `GET` | `/api/story/music/search?query=` | Private | Search songs via iTunes proxy |
 | `POST` | `/api/story/upload` | Private | Upload photo/video story with music payload |
 | `GET` | `/api/story/all` | Private | Fetch active stories of followed users |
+| `PUT` | `/api/story/:storyId/like` | Private | Toggle story like with socket notification |
 | `PUT` | `/api/story/:storyId/view` | Private | Mark story as viewed |
 | `DELETE` | `/api/story/delete/:storyId` | Private | Delete own active story |
 
