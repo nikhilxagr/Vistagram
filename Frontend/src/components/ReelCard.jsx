@@ -5,7 +5,7 @@ import axios from "axios";
 import { serverUrl } from "../App";
 import dp from "../assets/dp.png";
 import { FaHeart, FaRegHeart, FaRegComment, FaBookmark, FaRegBookmark } from "react-icons/fa6";
-import { FiSend, FiVolume2, FiVolumeX, FiPlay, FiPause, FiX, FiArrowLeft, FiMusic, FiTrash2 } from "react-icons/fi";
+import { FiSend, FiVolume2, FiVolumeX, FiPlay, FiPause, FiX, FiArrowLeft, FiMusic, FiTrash2, FiDownload } from "react-icons/fi";
 import { ClipLoader } from "react-spinners";
 import { toggleLikeReel, addCommentToReel } from "../redux/reel.Slice";
 import { setUserData } from "../redux/userSlice";
@@ -465,6 +465,20 @@ function ReelCard({ reel }) {
           <div className="p-2.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 group-hover:scale-110 transition">
             <FiSend className="text-white text-2xl" />
           </div>
+        </button>
+
+        {/* Download Action */}
+        <button
+          onClick={handleDownloadReel}
+          disabled={isDownloading}
+          className="flex flex-col items-center gap-1 cursor-pointer group disabled:opacity-50"
+          aria-label="Download Reel"
+          title="Download Reel"
+        >
+          <div className="p-2.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 group-hover:scale-110 transition">
+            <FiDownload className={`text-white text-2xl group-hover:text-green-400 ${isDownloading ? "animate-pulse text-green-400" : ""}`} />
+          </div>
+          <span className="text-[11px] font-semibold drop-shadow">Save</span>
         </button>
 
         {/* Save Action */}

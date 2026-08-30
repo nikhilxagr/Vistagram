@@ -22,6 +22,7 @@ import {
   FiTrash2,
   FiX,
   FiMusic,
+  FiDownload,
 } from "react-icons/fi";
 import { ClipLoader } from "react-spinners";
 import { toggleLikePost, addCommentToPost, removePost, updatePost } from "../redux/post.Slice";
@@ -347,6 +348,54 @@ function Post({ post }) {
     }
   };
 
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadPost = async (e) => {
+    if (e) e.stopPropagation();
+    if (!post?.media || isDownloading) return;
+    setIsDownloading(true);
+
+    try {
+      const response = await fetch(post.media);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+
+      let ext = ".jpg";
+      if (
+        post.mediaType === "video" ||
+        post.media?.match(/\.(mp4|mov|webm|mkv|3gp|avi|m4v)(\?.*)?$/i) ||
+        blob.type.startsWith("video/")
+      ) {
+        ext = ".mp4";
+      } else if (blob.type === "image/png" || post.media?.match(/\.png(\?.*)?$/i)) {
+        ext = ".png";
+      } else if (blob.type === "image/webp" || post.media?.match(/\.webp(\?.*)?$/i)) {
+        ext = ".webp";
+      }
+
+      const cleanUsername = authorUsername || "user";
+      link.download = `Vistagram_${cleanUsername}_${Date.now()}${ext}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Direct fetch download failed, fallback to window open:", err);
+      const link = document.createElement("a");
+      link.href = post.media;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.download = `Vistagram_${authorUsername || "post"}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const handleAddComment = async (e) => {
     e.preventDefault();
     if (!commentInput.trim() || isSubmittingComment) return;
@@ -549,11 +598,21 @@ function Post({ post }) {
                 {isOwnPost ? (
                   <>
                     <button
+                      onClick={(e) => {
+                        setShowMenu(false);
+                        handleDownloadPost(e);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-gray-200 hover:bg-gray-900 transition cursor-pointer text-left border-t border-gray-900"
+                    >
+                      <FiDownload size={14} className="text-green-400" />
+                      <span>Download Post</span>
+                    </button>
+                    <button
                       onClick={() => {
                         setShowMenu(false);
                         setIsEditing(true);
                       }}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-gray-200 hover:bg-gray-900 transition cursor-pointer text-left"
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-gray-200 hover:bg-gray-900 transition cursor-pointer text-left border-t border-gray-900"
                     >
                       <FiEdit2 size={14} className="text-blue-400" />
                       <span>Edit Post</span>
@@ -570,11 +629,21 @@ function Post({ post }) {
                 ) : (
                   <>
                     <button
+                      onClick={(e) => {
+                        setShowMenu(false);
+                        handleDownloadPost(e);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-gray-200 hover:bg-gray-900 transition cursor-pointer text-left"
+                    >
+                      <FiDownload size={14} className="text-green-400" />
+                      <span>Download Post</span>
+                    </button>
+                    <button
                       onClick={() => {
                         setShowMenu(false);
                         handleFollow();
                       }}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-gray-200 hover:bg-gray-900 transition cursor-pointer text-left"
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-gray-200 hover:bg-gray-900 transition cursor-pointer text-left border-t border-gray-900"
                     >
                       <span className="text-blue-400">{isFollowing ? "Unfollow User" : "Follow User"}</span>
                     </button>
@@ -715,16 +784,29 @@ function Post({ post }) {
           </button>
         </div>
 
-        <button
-          onClick={handleSave}
-          className="text-white hover:text-yellow-500 transition cursor-pointer group"
-        >
-          {isSaved ? (
-            <FaBookmark className="text-yellow-500 text-xl group-hover:scale-110 transition-transform" />
-          ) : (
-            <FaRegBookmark className="text-xl group-hover:scale-110 transition-transform" />
-          )}
-        </button>
+        <div className="flex items-center gap-4">
+          {/* Download Button */}
+          <button
+            onClick={handleDownloadPost}
+            disabled={isDownloading}
+            className="text-white hover:text-green-400 transition cursor-pointer group disabled:opacity-50"
+            aria-label="Download Post"
+            title="Download Post"
+          >
+            <FiDownload className={`text-xl group-hover:scale-110 transition-transform ${isDownloading ? "animate-pulse text-green-400" : ""}`} />
+          </button>
+
+          <button
+            onClick={handleSave}
+            className="text-white hover:text-yellow-500 transition cursor-pointer group"
+          >
+            {isSaved ? (
+              <FaBookmark className="text-yellow-500 text-xl group-hover:scale-110 transition-transform" />
+            ) : (
+              <FaRegBookmark className="text-xl group-hover:scale-110 transition-transform" />
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Caption Section */}
