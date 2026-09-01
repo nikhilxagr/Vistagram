@@ -16,6 +16,17 @@ axios.interceptors.request.use((config) => {
   return config;
 });
 
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      localStorage.removeItem("vistagram_user");
+      localStorage.removeItem("vistagram_token");
+    }
+    return Promise.reject(error);
+  }
+);
+
 
 createRoot(document.getElementById('root')).render(
   <BrowserRouter>

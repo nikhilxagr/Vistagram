@@ -36,12 +36,13 @@ export const signup = async (req, res) => {
     });
     const token = await genToken(user._id);
     const isProduction = process.env.NODE_ENV === "production" || Boolean(process.env.RENDER) || Boolean(process.env.CLIENT_URL);
+    const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
     res.cookie("token", token, {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? "none" : "lax",
       path: "/",
-      maxAge: 10 * 365 * 24 * 60 * 60 * 1000, // 10 years
+      maxAge: ONE_YEAR_MS, // 1 year
     });
     res.status(201).json({ message: "User created successfully", user, token });
   } catch (error) {
@@ -70,12 +71,13 @@ export const signin = async (req, res) => {
 
     const token = await genToken(user._id);
     const isProduction = process.env.NODE_ENV === "production" || Boolean(process.env.RENDER) || Boolean(process.env.CLIENT_URL);
+    const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
     res.cookie("token", token, {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? "none" : "lax",
       path: "/",
-      maxAge: 10 * 365 * 24 * 60 * 60 * 1000, // 10 years
+      maxAge: ONE_YEAR_MS, // 1 year
     });
     res.status(200).json({ message: "Signin successful", user, token });
   } catch (error) {
