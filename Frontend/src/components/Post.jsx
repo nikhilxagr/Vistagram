@@ -57,6 +57,13 @@ function Post({ post }) {
       audio.pause();
       setIsMusicPlaying(false);
     } else {
+      if (videoRef.current && !videoRef.current.muted) {
+        videoRef.current.muted = true;
+        setVideoMuted(true);
+      }
+      window.dispatchEvent(
+        new CustomEvent("vistagram_media_play", { detail: { postId: post?._id } })
+      );
       audio.play().catch((err) => console.log("Audio play error:", err));
       setIsMusicPlaying(true);
     }
@@ -102,7 +109,7 @@ function Post({ post }) {
   const clickTimeoutRef = useRef(null);
 
   const [videoPlaying, setVideoPlaying] = useState(false);
-  const [videoMuted, setVideoMuted] = useState(false);
+  const [videoMuted, setVideoMuted] = useState(true);
   const [videoProgress, setVideoProgress] = useState(0);
   const [showHeartAnim, setShowHeartAnim] = useState(false);
 
@@ -150,33 +157,72 @@ function Post({ post }) {
     }
   }, [post?.comments]);
 
+  // Listen for other media playing to pause this post
+  useEffect(() => {
+    const handleOtherMediaPlay = (e) => {
+      const activeId = e.detail?.postId?.toString();
+      const myId = post?._id?.toString();
+      if (activeId && myId && activeId !== myId) {
+        if (postAudioRef.current && !postAudioRef.current.paused) {
+          postAudioRef.current.pause();
+          setIsMusicPlaying(false);
+        }
+        if (videoRef.current && !videoRef.current.paused) {
+          videoRef.current.pause();
+          setVideoPlaying(false);
+        }
+      }
+    };
+
+    window.addEventListener("vistagram_media_play", handleOtherMediaPlay);
+    return () => window.removeEventListener("vistagram_media_play", handleOtherMediaPlay);
+  }, [post?._id]);
+
   // Auto pause video & audio when post scrolls out of viewport
   useEffect(() => {
-    if (post?.mediaType !== "video") return;
     const container = postContainerRef.current;
-    const video = videoRef.current;
-    if (!container || !video) return;
+    if (!container) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            video
-              .play()
-              .then(() => setVideoPlaying(true))
-              .catch(() => setVideoPlaying(false));
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+            // Post in view (>50% visible): if video, auto-play it muted
+            if (post?.mediaType === "video" && videoRef.current) {
+              const v = videoRef.current;
+              v.muted = true;
+              setVideoMuted(true);
+              v.play()
+                .then(() => setVideoPlaying(true))
+                .catch(() => setVideoPlaying(false));
+            }
           } else {
-            video.pause();
-            setVideoPlaying(false);
+            // Post scrolled out of viewport: immediately pause both video and background audio
+            if (videoRef.current && !videoRef.current.paused) {
+              videoRef.current.pause();
+              setVideoPlaying(false);
+            }
+            if (postAudioRef.current && !postAudioRef.current.paused) {
+              postAudioRef.current.pause();
+              setIsMusicPlaying(false);
+            }
           }
         });
       },
-      { threshold: 0.5 }
+      { threshold: [0, 0.5, 1.0] }
     );
 
     observer.observe(container);
-    return () => observer.disconnect();
-  }, [post?.mediaType]);
+    return () => {
+      observer.disconnect();
+      if (postAudioRef.current) {
+        postAudioRef.current.pause();
+      }
+      if (videoRef.current) {
+        videoRef.current.pause();
+      }
+    };
+  }, [post?.mediaType, post?._id]);
 
   // Close options menu when clicking outside
   useEffect(() => {
@@ -192,6 +238,13 @@ function Post({ post }) {
     const v = videoRef.current;
     if (!v) return;
     if (v.paused) {
+      if (postAudioRef.current && !postAudioRef.current.paused) {
+        postAudioRef.current.pause();
+        setIsMusicPlaying(false);
+      }
+      window.dispatchEvent(
+        new CustomEvent("vistagram_media_play", { detail: { postId: post?._id } })
+      );
       v.play()
         .then(() => setVideoPlaying(true))
         .catch(() => {});
@@ -226,11 +279,21 @@ function Post({ post }) {
   };
 
   const toggleVideoMute = (e) => {
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     const v = videoRef.current;
     if (!v) return;
-    v.muted = !v.muted;
-    setVideoMuted(v.muted);
+    const nextMuted = !v.muted;
+    v.muted = nextMuted;
+    setVideoMuted(nextMuted);
+    if (!nextMuted) {
+      if (postAudioRef.current && !postAudioRef.current.paused) {
+        postAudioRef.current.pause();
+        setIsMusicPlaying(false);
+      }
+      window.dispatchEvent(
+        new CustomEvent("vistagram_media_play", { detail: { postId: post?._id } })
+      );
+    }
   };
 
   const handleVideoTimeUpdate = () => {
@@ -684,8 +747,9 @@ function Post({ post }) {
               className="w-full max-h-[620px] object-contain bg-black cursor-pointer"
               onTimeUpdate={handleVideoTimeUpdate}
               onEnded={() => setVideoPlaying(false)}
-              loop={false}
+              loop
               playsInline
+              muted={videoMuted}
             />
 
             {/* Mute Button */}

@@ -6,6 +6,7 @@ import {
   FiVideo,
   FiVideoOff,
   FiRefreshCw,
+  FiX,
 } from "react-icons/fi";
 import { MdCall, MdCallEnd } from "react-icons/md";
 import dp from "../assets/dp.png";
@@ -58,6 +59,35 @@ function CallModal() {
 
   const [hasCamera, setHasCamera] = useState(isVideoCall);
   const [facingMode, setFacingMode] = useState("user"); // 'user' or 'environment'
+  const [callNotification, setCallNotification] = useState(null);
+  const notificationTimerRef = useRef(null);
+
+  const showCallNotification = (notification) => {
+    if (notificationTimerRef.current) {
+      clearTimeout(notificationTimerRef.current);
+    }
+    setCallNotification(notification);
+    notificationTimerRef.current = setTimeout(() => {
+      setCallNotification(null);
+      notificationTimerRef.current = null;
+    }, 4500);
+  };
+
+  const handleDismissNotification = () => {
+    if (notificationTimerRef.current) {
+      clearTimeout(notificationTimerRef.current);
+      notificationTimerRef.current = null;
+    }
+    setCallNotification(null);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (notificationTimerRef.current) {
+        clearTimeout(notificationTimerRef.current);
+      }
+    };
+  }, []);
 
   const currentUserId = (userData?._id || userData?.id)?.toString();
   const activePartner = callerInfo || receiverInfo;
@@ -208,18 +238,40 @@ function CallModal() {
       }
     };
 
-    const handleCallEnded = () => {
+    const handleCallEnded = (data) => {
+      ringtone.stop();
       cleanUpCall();
+      const enderName = data?.by?.name || data?.by?.username || partnerName || "User";
+      showCallNotification({
+        type: "ended",
+        title: "Call Ended",
+        message: `${enderName} ended the call`,
+        image: data?.by?.profileImage || partnerImage,
+      });
     };
 
-    const handleCallRejected = () => {
-      alert(`${partnerName} declined the call.`);
+    const handleCallRejected = (data) => {
+      ringtone.stop();
       cleanUpCall();
+      const declinerName = data?.by?.name || data?.by?.username || partnerName || "User";
+      const declinerImage = data?.by?.profileImage || partnerImage;
+      showCallNotification({
+        type: "declined",
+        title: "Call Declined",
+        message: `${declinerName} declined the call`,
+        image: declinerImage,
+      });
     };
 
     const handleUserOffline = () => {
-      alert(`${partnerName} is currently offline.`);
+      ringtone.stop();
       cleanUpCall();
+      showCallNotification({
+        type: "offline",
+        title: "User Unavailable",
+        message: `${partnerName} is currently offline`,
+        image: partnerImage,
+      });
     };
 
     socket.on("callAccepted", handleCallAccepted);
@@ -333,15 +385,32 @@ function CallModal() {
   const handleRejectCall = () => {
     ringtone.stop();
     if (socket && partnerId) {
-      socket.emit("rejectCall", { to: partnerId });
+      socket.emit("rejectCall", {
+        to: partnerId,
+        from: {
+          _id: currentUserId,
+          name: userData?.name,
+          username: userData?.username,
+          profileImage: userData?.profileImage,
+        },
+      });
     }
     cleanUpCall();
   };
 
-  // End active call
+  // End active call or cancel outgoing call
   const handleEndCall = () => {
+    ringtone.stop();
     if (socket && partnerId) {
-      socket.emit("endCall", { to: partnerId });
+      socket.emit("endCall", {
+        to: partnerId,
+        from: {
+          _id: currentUserId,
+          name: userData?.name,
+          username: userData?.username,
+          profileImage: userData?.profileImage,
+        },
+      });
     }
     cleanUpCall();
   };
@@ -401,17 +470,58 @@ function CallModal() {
     }
   };
 
-  if (callState === "idle") return null;
+  if (callState === "idle" && !callNotification) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-xl animate-in fade-in duration-200 select-none">
-      {/* Dedicated audio element for remote stream playback during voice calls */}
-      <audio
-        ref={remoteAudioRef}
-        autoPlay
-        playsInline
-        muted={isVideoCall}
-      />
+    <>
+      {/* -------------------- CALL NOTIFICATION POPUP (Toast Banner) -------------------- */}
+      {callNotification && (
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[200] w-full max-w-sm px-4 animate-in slide-in-from-top-4 fade-in duration-300 pointer-events-auto">
+          <div className="bg-[#18181b]/95 backdrop-blur-2xl border border-red-500/30 rounded-2xl p-4 shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 overflow-hidden">
+              <div className="relative flex-shrink-0">
+                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-red-500/60 bg-gray-900">
+                  <img
+                    src={callNotification.image || dp}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center shadow">
+                  <MdCallEnd size={12} />
+                </div>
+              </div>
+              <div className="flex flex-col text-left overflow-hidden">
+                <span className="text-xs uppercase tracking-wider font-bold text-red-400">
+                  {callNotification.title}
+                </span>
+                <span className="text-sm font-semibold text-white truncate">
+                  {callNotification.message}
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleDismissNotification}
+              className="p-1.5 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition cursor-pointer flex-shrink-0"
+              aria-label="Dismiss"
+            >
+              <FiX size={18} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* -------------------- FULL SCREEN CALL MODAL -------------------- */}
+      {callState !== "idle" && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-xl animate-in fade-in duration-200 select-none">
+          {/* Dedicated audio element for remote stream playback during voice calls */}
+          <audio
+            ref={remoteAudioRef}
+            autoPlay
+            playsInline
+            muted={isVideoCall}
+          />
       {/* -------------------- 1. INCOMING CALL DIALOG -------------------- */}
       {callState === "incoming" && (
         <div className="flex flex-col items-center justify-between p-8 w-full max-w-sm h-[480px] bg-gradient-to-b from-[#18181b] to-black rounded-3xl border border-gray-800 shadow-[0_0_50px_rgba(0,0,0,0.8)] text-center animate-in zoom-in-95">
@@ -637,6 +747,8 @@ function CallModal() {
         </div>
       )}
     </div>
+  )}
+    </>
   );
 }
 

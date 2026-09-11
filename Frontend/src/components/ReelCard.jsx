@@ -133,6 +133,22 @@ function ReelCard({ reel }) {
     }
   }, [reel?.comments]);
 
+  // Listen for other media playing to pause this reel
+  useEffect(() => {
+    const handleOtherMedia = (e) => {
+      const activeId = e.detail?.postId?.toString();
+      const myId = reel?._id?.toString();
+      if (activeId && myId && activeId !== myId) {
+        if (videoRef.current && !videoRef.current.paused) {
+          videoRef.current.pause();
+          setIsPlaying(false);
+        }
+      }
+    };
+    window.addEventListener("vistagram_media_play", handleOtherMedia);
+    return () => window.removeEventListener("vistagram_media_play", handleOtherMedia);
+  }, [reel?._id]);
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -140,7 +156,10 @@ function ReelCard({ reel }) {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
+            window.dispatchEvent(
+              new CustomEvent("vistagram_media_play", { detail: { postId: reel?._id } })
+            );
             video.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
           } else {
             video.pause();
@@ -148,12 +167,17 @@ function ReelCard({ reel }) {
           }
         });
       },
-      { threshold: 0.6 }
+      { threshold: [0, 0.6] }
     );
 
     observer.observe(video);
-    return () => observer.disconnect();
-  }, []);
+    return () => {
+      observer.disconnect();
+      if (videoRef.current) {
+        videoRef.current.pause();
+      }
+    };
+  }, [reel?._id]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -177,6 +201,9 @@ function ReelCard({ reel }) {
     const video = videoRef.current;
     if (!video) return;
     if (video.paused) {
+      window.dispatchEvent(
+        new CustomEvent("vistagram_media_play", { detail: { postId: reel?._id } })
+      );
       video.play();
       setIsPlaying(true);
     } else {

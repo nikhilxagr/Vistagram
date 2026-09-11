@@ -66,17 +66,17 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("endCall", ({ to }) => {
+  socket.on("endCall", ({ to, from }) => {
     const targetSocketId = getReceiverSocketId(to);
     if (targetSocketId) {
-      io.to(targetSocketId).emit("callEnded");
+      io.to(targetSocketId).emit("callEnded", { by: from });
     }
   });
 
-  socket.on("rejectCall", ({ to }) => {
+  socket.on("rejectCall", ({ to, from }) => {
     const callerSocketId = getReceiverSocketId(to);
     if (callerSocketId) {
-      io.to(callerSocketId).emit("callRejected");
+      io.to(callerSocketId).emit("callRejected", { by: from });
     }
   });
 

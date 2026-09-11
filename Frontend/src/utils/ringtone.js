@@ -59,6 +59,9 @@ class RingtonePlayer {
   start() {
     if (this.isPlaying) return;
     this.init();
+    if (this.audioCtx && this.audioCtx.state === "suspended") {
+      this.audioCtx.resume().catch(() => {});
+    }
     this.isPlaying = true;
     this.playBeep();
     this.intervalId = setInterval(() => {
@@ -73,6 +76,9 @@ class RingtonePlayer {
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
+    }
+    if (this.audioCtx && this.audioCtx.state === "running") {
+      this.audioCtx.suspend().catch(() => {});
     }
   }
 }
