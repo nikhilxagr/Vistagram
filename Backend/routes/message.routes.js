@@ -6,6 +6,7 @@ import {
   getAllMessages,
   getprevUserChats,
   reactToMessage,
+  unsendMessage,
 } from "../controllers/message.controller.js";
 
 const messageRouter = express.Router();
@@ -20,6 +21,7 @@ messageRouter.post(
   sendMessage
 );
 messageRouter.put("/react/:messageId", isAuth, reactToMessage);
+messageRouter.delete("/unsend/:messageId", isAuth, unsendMessage);
 messageRouter.get("/getAll/:receiverId", isAuth, getAllMessages);
 messageRouter.get("/getall/:receiverId", isAuth, getAllMessages);
 messageRouter.get("/getAll", isAuth, getAllMessages);

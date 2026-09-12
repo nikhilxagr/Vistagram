@@ -40,8 +40,19 @@ const messageSlice = createSlice({
         msg.reactions = reactions;
       }
     },
+    deleteMessage: (state, action) => {
+      const messageId = action.payload;
+      state.messages = state.messages.filter(
+        (m) => (m._id || m.id)?.toString() !== messageId?.toString()
+      );
+    },
   },
 });
 
-export const { setSelectedUser, setMessages, updateMessageReaction } = messageSlice.actions;
+export const {
+  setSelectedUser,
+  setMessages,
+  updateMessageReaction,
+  deleteMessage,
+} = messageSlice.actions;
 export default messageSlice.reducer;

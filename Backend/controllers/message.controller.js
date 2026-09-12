@@ -245,3 +245,57 @@ export const reactToMessage = async (req, res) => {
     return res.status(500).json({ message: "Failed to react to message", error: error.message });
   }
 };
+
+export const unsendMessage = async (req, res) => {
+  try {
+    const userId = req.userId || req.user?._id;
+    const { messageId } = req.params;
+
+    if (!userId || !messageId) {
+      return res.status(400).json({ message: "UserId and messageId required" });
+    }
+
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    // Only the sender who sent the message can unsend it
+    if (message.sender.toString() !== userId.toString()) {
+      return res.status(403).json({ message: "You can only unsend your own messages" });
+    }
+
+    const senderId = message.sender;
+    const receiverId = message.receiver;
+
+    // Remove from conversation
+    await Conversation.updateMany(
+      { participants: { $all: [senderId, receiverId] } },
+      { $pull: { messages: message._id } }
+    );
+
+    // Delete message from database
+    await Message.findByIdAndDelete(messageId);
+
+    // Real-time notification to receiver & sender
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    const senderSocketId = getReceiverSocketId(senderId);
+
+    const payload = { messageId: message._id };
+
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("messageUnsent", payload);
+    }
+    if (senderSocketId && senderSocketId !== receiverSocketId) {
+      io.to(senderSocketId).emit("messageUnsent", payload);
+    }
+
+    return res.status(200).json({
+      message: "Message unsent successfully",
+      messageId: message._id,
+    });
+  } catch (error) {
+    console.error("Error unsending message:", error);
+    return res.status(500).json({ message: "Failed to unsend message", error: error.message });
+  }
+};

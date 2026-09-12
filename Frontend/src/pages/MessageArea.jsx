@@ -5,7 +5,7 @@ import { MdOutlineKeyboardBackspace } from "react-icons/md";
 import { FiImage, FiSend, FiX, FiMic, FiTrash2, FiPhone, FiVideo } from "react-icons/fi";
 import { ClipLoader } from "react-spinners";
 import axios from "axios";
-import { setMessages, updateMessageReaction } from "../redux/message.Slice";
+import { setMessages, updateMessageReaction, deleteMessage } from "../redux/message.Slice";
 import { startCall } from "../redux/call.Slice";
 import { serverUrl } from "../App.jsx";
 import dp from "../assets/dp.png";
@@ -79,11 +79,20 @@ function MessageArea() {
       dispatch(updateMessageReaction(payload));
     };
 
+    const handleMessageUnsent = (payload) => {
+      const unsetId = payload?.messageId;
+      if (unsetId) {
+        dispatch(deleteMessage(unsetId));
+      }
+    };
+
     socket.on("newMessage", handleNewMessage);
     socket.on("messageReaction", handleMessageReaction);
+    socket.on("messageUnsent", handleMessageUnsent);
     return () => {
       socket.off("newMessage", handleNewMessage);
       socket.off("messageReaction", handleMessageReaction);
+      socket.off("messageUnsent", handleMessageUnsent);
     };
   }, [socket, messages, targetUserId, dispatch]);
 
@@ -161,6 +170,20 @@ function MessageArea() {
       setTimeout(() => {
         el.classList.remove("bg-indigo-500/20", "rounded-2xl");
       }, 1200);
+    }
+  };
+
+  const handleUnsendMessage = async (messageId) => {
+    if (!messageId) return;
+    dispatch(deleteMessage(messageId));
+
+    try {
+      await axios.delete(`${serverUrl}/api/messages/unsend/${messageId}`, {
+        withCredentials: true,
+      });
+    } catch (err) {
+      console.error("Error unsending message:", err);
+      getAllMessages();
     }
   };
 
@@ -523,6 +546,7 @@ function MessageArea() {
                 onReact={handleReactToMessage}
                 onReply={handleReply}
                 onScrollToMessage={handleScrollToMessage}
+                onUnsend={handleUnsendMessage}
               />
             ) : (
               <ReceiverMessage

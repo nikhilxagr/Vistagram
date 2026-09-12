@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { FiSmile, FiCornerUpLeft } from "react-icons/fi";
+import { FiSmile, FiCornerUpLeft, FiTrash2 } from "react-icons/fi";
 import ReelMessageCard from "./ReelMessageCard";
 import VoiceNotePlayer from "./VoiceNotePlayer";
 import ReactionPicker from "./ReactionPicker";
@@ -14,13 +14,21 @@ function parseReelShare(text) {
   }
 }
 
-function SenderMessage({ message, onReact, onReply, onScrollToMessage }) {
+function SenderMessage({
+  message,
+  onReact,
+  onReply,
+  onScrollToMessage,
+  onUnsend,
+}) {
   const [showPicker, setShowPicker] = useState(false);
   const [showHeartAnim, setShowHeartAnim] = useState(false);
+  const [showUnsendModal, setShowUnsendModal] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
 
   const lastTapRef = useRef(0);
   const touchStartXRef = useRef(0);
+  const longPressTimerRef = useRef(null);
 
   const timeString = message.createdAt
     ? new Date(message.createdAt).toLocaleTimeString([], {
@@ -46,16 +54,27 @@ function SenderMessage({ message, onReact, onReply, onScrollToMessage }) {
 
   const handleTouchStart = (e) => {
     touchStartXRef.current = e.touches[0].clientX;
+    longPressTimerRef.current = setTimeout(() => {
+      setShowUnsendModal(true);
+    }, 550);
   };
 
   const handleTouchMove = (e) => {
     const diff = e.touches[0].clientX - touchStartXRef.current;
+    if (Math.abs(diff) > 10 && longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
     if (diff > 0 && diff < 85) {
       setSwipeOffset(diff);
     }
   };
 
   const handleTouchEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
     if (swipeOffset > 45 && onReply) {
       onReply(message);
     }
@@ -69,6 +88,10 @@ function SenderMessage({ message, onReact, onReply, onScrollToMessage }) {
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        setShowUnsendModal(true);
+      }}
     >
       {/* Swipe Reply Arrow Indicator */}
       {swipeOffset > 15 && (
@@ -102,6 +125,14 @@ function SenderMessage({ message, onReact, onReply, onScrollToMessage }) {
             title="React with emoji"
           >
             <FiSmile size={15} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowUnsendModal(true)}
+            className="p-1 rounded-full hover:bg-red-500/20 hover:text-red-400 transition cursor-pointer text-gray-400"
+            title="Unsend message"
+          >
+            <FiTrash2 size={14} />
           </button>
         </div>
 
@@ -213,6 +244,51 @@ function SenderMessage({ message, onReact, onReply, onScrollToMessage }) {
         <span className="text-[10px] text-gray-500 font-medium mt-1.5 mr-1">
           {timeString}
         </span>
+      )}
+
+      {/* Unsend Confirmation Modal */}
+      {showUnsendModal && (
+        <div
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowUnsendModal(false);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-150"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#18181b] border border-gray-800 rounded-3xl w-full max-w-xs p-6 flex flex-col items-center text-center shadow-2xl animate-in zoom-in-95 duration-150 select-none"
+          >
+            <div className="w-12 h-12 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mb-3">
+              <FiTrash2 size={24} />
+            </div>
+            <h3 className="text-base font-bold text-white mb-1.5">
+              Unsend message?
+            </h3>
+            <p className="text-xs text-gray-400 mb-6 leading-relaxed">
+              Unsend will remove the message for everyone in the chat. People may have already seen or listened to it.
+            </p>
+            <div className="w-full flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowUnsendModal(false);
+                  if (onUnsend) onUnsend(message._id);
+                }}
+                className="w-full py-2.5 rounded-full bg-red-600 hover:bg-red-500 text-white font-bold text-xs transition cursor-pointer shadow-lg shadow-red-600/30 active:scale-95"
+              >
+                Unsend
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowUnsendModal(false)}
+                className="w-full py-2.5 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 font-semibold text-xs transition cursor-pointer active:scale-95"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
