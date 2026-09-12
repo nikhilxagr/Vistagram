@@ -11,10 +11,10 @@ const uploadOnCloudinary = async (file) => {
       api_secret: process.env.CLOUDINARY_API_SECRET,
     });
 
-    const isVideo = Boolean(file?.match(/\.(mp4|mov|webm|mkv|3gp|avi|m4v)$/i));
+    const isVideoOrAudio = Boolean(file?.match(/\.(mp4|mov|webm|mkv|3gp|avi|m4v|mp3|wav|ogg|m4a|aac)$/i));
 
     const result = await cloudinary.uploader.upload(file, {
-      resource_type: isVideo ? "video" : "auto",
+      resource_type: isVideoOrAudio ? "video" : "auto",
       timeout: 120000,
     });
 

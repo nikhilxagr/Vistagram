@@ -20,6 +20,19 @@ const messageSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    audio: {
+      type: String,
+      default: null,
+    },
+    audioDuration: {
+      type: Number,
+      default: 0,
+    },
+    messageType: {
+      type: String,
+      enum: ["text", "image", "audio", "reel_share"],
+      default: "text",
+    },
   },
   {
     timestamps: true,

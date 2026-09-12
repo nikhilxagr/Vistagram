@@ -5,7 +5,15 @@ import { sendMessage, getAllMessages, getprevUserChats } from "../controllers/me
 
 const messageRouter = express.Router();
 
-messageRouter.post("/send/:receiverId", isAuth, upload.single("image"), sendMessage);
+messageRouter.post(
+  "/send/:receiverId",
+  isAuth,
+  upload.fields([
+    { name: "image", maxCount: 1 },
+    { name: "audio", maxCount: 1 },
+  ]),
+  sendMessage
+);
 messageRouter.get("/getAll/:receiverId", isAuth, getAllMessages);
 messageRouter.get("/getall/:receiverId", isAuth, getAllMessages);
 messageRouter.get("/getAll", isAuth, getAllMessages);

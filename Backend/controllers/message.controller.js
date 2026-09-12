@@ -9,26 +9,54 @@ export const sendMessage = async (req, res) => {
   try {
     const senderId = req.userId || req.user?._id;
     const receiverId = req.params.receiverId;
-    const { message } = req.body;
+    const { message, audioDuration } = req.body;
 
     if (!senderId || !receiverId) {
       return res.status(400).json({ message: "Sender and receiver required" });
     }
 
+    const imageFile = req.files?.image?.[0] || (req.file?.fieldname === "image" ? req.file : null);
+    const audioFile = req.files?.audio?.[0] || (req.file?.fieldname === "audio" ? req.file : null);
+
     let imageUrl = null;
-    if (req.file) {
+    if (imageFile) {
       try {
-        const uploaded = await uploadOnCloudinary(req.file.path);
+        const uploaded = await uploadOnCloudinary(imageFile.path);
         imageUrl = typeof uploaded === "string" ? uploaded : uploaded?.secure_url;
       } catch (err) {
-        console.error("Cloudinary failed, using local base64 fallback:", err);
-        const fileData = fs.readFileSync(req.file.path);
-        const mimeType = req.file.mimetype || "image/png";
+        console.error("Cloudinary failed for image, using local base64 fallback:", err);
+        const fileData = fs.readFileSync(imageFile.path);
+        const mimeType = imageFile.mimetype || "image/png";
         imageUrl = `data:${mimeType};base64,${fileData.toString("base64")}`;
-        if (fs.existsSync(req.file.path)) {
-          fs.unlinkSync(req.file.path);
+        if (fs.existsSync(imageFile.path)) {
+          fs.unlinkSync(imageFile.path);
         }
       }
+    }
+
+    let audioUrl = null;
+    if (audioFile) {
+      try {
+        const uploaded = await uploadOnCloudinary(audioFile.path);
+        audioUrl = typeof uploaded === "string" ? uploaded : uploaded?.secure_url;
+      } catch (err) {
+        console.error("Cloudinary failed for audio, using local base64 fallback:", err);
+        const fileData = fs.readFileSync(audioFile.path);
+        const mimeType = audioFile.mimetype || "audio/webm";
+        audioUrl = `data:${mimeType};base64,${fileData.toString("base64")}`;
+        if (fs.existsSync(audioFile.path)) {
+          fs.unlinkSync(audioFile.path);
+        }
+      }
+    }
+
+    let messageType = "text";
+    if (audioUrl) {
+      messageType = "audio";
+    } else if (imageUrl) {
+      messageType = "image";
+    } else if (message && message.includes('"type":"reel_share"')) {
+      messageType = "reel_share";
     }
 
     const newMessage = await Message.create({
@@ -36,6 +64,9 @@ export const sendMessage = async (req, res) => {
       receiver: receiverId,
       messages: message || "",
       image: imageUrl,
+      audio: audioUrl,
+      audioDuration: audioDuration ? Number(audioDuration) : 0,
+      messageType,
     });
 
     let conversation = await Conversation.findOne({

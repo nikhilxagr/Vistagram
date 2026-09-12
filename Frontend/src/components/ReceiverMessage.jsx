@@ -1,6 +1,7 @@
 import React from "react";
 import dp from "../assets/dp.png";
 import ReelMessageCard from "./ReelMessageCard";
+import VoiceNotePlayer from "./VoiceNotePlayer";
 
 function parseReelShare(text) {
   if (!text || !text.includes('"type":"reel_share"')) return null;
@@ -46,6 +47,16 @@ function ReceiverMessage({ message, authorImage }) {
                   src={message.image}
                   alt="Received attachment"
                   className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+
+            {message.audio && (
+              <div className="bg-[#262626] text-white rounded-2xl rounded-tl-xs px-3.5 py-2 text-xs font-medium shadow-md border border-gray-800/90 mb-1">
+                <VoiceNotePlayer
+                  audioUrl={message.audio}
+                  duration={message.audioDuration}
+                  isSender={false}
                 />
               </div>
             )}

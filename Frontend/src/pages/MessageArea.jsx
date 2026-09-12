@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { MdOutlineKeyboardBackspace } from "react-icons/md";
-import { FiImage, FiSend, FiX } from "react-icons/fi";
+import { FiImage, FiSend, FiX, FiMic, FiTrash2 } from "react-icons/fi";
 import { ClipLoader } from "react-spinners";
 import axios from "axios";
 import { setMessages } from "../redux/message.Slice";
@@ -22,8 +22,14 @@ function MessageArea() {
 
   const [textMessage, setTextMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordDuration, setRecordDuration] = useState(0);
 
   const messagesEndRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const recordingTimerRef = useRef(null);
+  const audioStreamRef = useRef(null);
 
   const currentUserId = (userData?._id || userData?.id)?.toString();
   const targetUserId = (selectedUser?._id || selectedUser?.id)?.toString();
@@ -144,6 +150,168 @@ function MessageArea() {
     }
   };
 
+  // Cleanup audio stream tracks & interval on unmount
+  useEffect(() => {
+    return () => {
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach((t) => t.stop());
+      }
+    };
+  }, []);
+
+  const startRecording = async () => {
+    if (isSending || isRecording || !targetUserId) return;
+
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("Audio recording is not supported on this browser.");
+        return;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioStreamRef.current = stream;
+
+      let mimeType = "audio/webm";
+      if (typeof MediaRecorder !== "undefined") {
+        if (!MediaRecorder.isTypeSupported("audio/webm")) {
+          if (MediaRecorder.isTypeSupported("audio/mp4")) {
+            mimeType = "audio/mp4";
+          } else if (MediaRecorder.isTypeSupported("audio/ogg")) {
+            mimeType = "audio/ogg";
+          } else {
+            mimeType = "";
+          }
+        }
+      }
+
+      const options = mimeType ? { mimeType } : undefined;
+      const mediaRecorder = new MediaRecorder(stream, options);
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorder.start(200);
+      mediaRecorderRef.current = mediaRecorder;
+
+      setIsRecording(true);
+      setRecordDuration(0);
+
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = setInterval(() => {
+        setRecordDuration((prev) => prev + 1);
+      }, 1000);
+    } catch (err) {
+      console.error("Microphone access error:", err);
+      alert("Microphone permission was denied. Please allow microphone access to record voice notes.");
+    }
+  };
+
+  const cancelRecording = () => {
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.ondataavailable = null;
+      mediaRecorderRef.current.onstop = null;
+      if (mediaRecorderRef.current.state !== "inactive") {
+        try {
+          mediaRecorderRef.current.stop();
+        } catch {}
+      }
+      mediaRecorderRef.current = null;
+    }
+
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach((track) => track.stop());
+      audioStreamRef.current = null;
+    }
+
+    audioChunksRef.current = [];
+    setIsRecording(false);
+    setRecordDuration(0);
+  };
+
+  const sendVoiceNote = async () => {
+    if (!mediaRecorderRef.current || isSending || !targetUserId) return;
+
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+
+    const duration = recordDuration;
+    const recorder = mediaRecorderRef.current;
+
+    setIsSending(true);
+    setIsRecording(false);
+
+    recorder.onstop = async () => {
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach((t) => t.stop());
+        audioStreamRef.current = null;
+      }
+
+      const mimeType = recorder.mimeType || "audio/webm";
+      const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+      audioChunksRef.current = [];
+
+      if (audioBlob.size === 0) {
+        setIsSending(false);
+        setRecordDuration(0);
+        return;
+      }
+
+      const fileExt = mimeType.includes("mp4") ? "mp4" : mimeType.includes("ogg") ? "ogg" : "webm";
+      const audioFile = new File([audioBlob], `voice_note_${Date.now()}.${fileExt}`, {
+        type: mimeType,
+      });
+
+      const formData = new FormData();
+      formData.append("audio", audioFile);
+      formData.append("audioDuration", Math.max(1, duration));
+
+      try {
+        const res = await axios.post(
+          `${serverUrl}/api/messages/send/${targetUserId}`,
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+            withCredentials: true,
+          }
+        );
+
+        if (res.data?.data) {
+          dispatch(setMessages([...(messages || []), res.data.data]));
+        } else {
+          getAllMessages();
+        }
+      } catch (err) {
+        console.error("Error sending voice note:", err);
+      } finally {
+        setIsSending(false);
+        setRecordDuration(0);
+      }
+    };
+
+    try {
+      if (recorder.state !== "inactive") {
+        recorder.stop();
+      }
+    } catch (err) {
+      console.error("Error stopping recorder:", err);
+      cancelRecording();
+    }
+  };
+
   if (!selectedUser) {
     return (
       <div className="w-full h-screen bg-black flex flex-col items-center justify-center text-white gap-4 p-4">
@@ -237,42 +405,109 @@ function MessageArea() {
         onSubmit={handleSendMessage}
         className="w-full pb-5 pt-2 px-4 flex justify-center bg-black sticky bottom-0 z-40"
       >
-        <div className="w-full max-w-2xl bg-[#121212] border border-gray-800/80 rounded-full flex items-center px-4 py-2 text-white shadow-2xl gap-2 sm:gap-3">
-          <input
-            type="text"
-            value={textMessage}
-            onChange={(e) => setTextMessage(e.target.value)}
-            placeholder="Message..."
-            className="flex-1 bg-transparent text-sm text-white placeholder-gray-500 outline-none px-2"
-          />
+        {isRecording ? (
+          <div className="w-full max-w-2xl bg-gradient-to-r from-gray-950 via-[#18181b] to-gray-950 border border-red-500/40 rounded-full flex items-center justify-between px-4 py-2 text-white shadow-[0_0_25px_rgba(239,68,68,0.15)] gap-3">
+            {/* Live recording indicator & timer */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.9)]" />
+              <span className="text-xs font-mono font-bold text-red-400">
+                {Math.floor(recordDuration / 60)}:{(recordDuration % 60).toString().padStart(2, "0")}
+              </span>
+            </div>
 
-          <label className="cursor-pointer text-gray-400 hover:text-white transition p-1.5 rounded-full hover:bg-gray-800/60 flex items-center justify-center">
-            {isSending ? (
-              <ClipLoader size={18} color="#a855f7" />
-            ) : (
-              <FiImage size={21} />
-            )}
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
+            {/* Sound wave equalizer animation */}
+            <div className="flex-1 flex items-center justify-center gap-[3px] h-6 px-2 overflow-hidden">
+              {[35, 65, 90, 50, 80, 40, 100, 75, 45, 85, 60, 95, 50, 70, 40, 85, 60, 100].map((h, i) => (
+                <div
+                  key={i}
+                  style={{
+                    height: `${h}%`,
+                    animationDuration: `${0.6 + (i % 4) * 0.2}s`,
+                  }}
+                  className="w-1 bg-gradient-to-t from-red-500 to-pink-400 rounded-full animate-pulse"
+                />
+              ))}
+            </div>
+
+            {/* Discard / Cancel Button */}
+            <button
+              type="button"
+              onClick={cancelRecording}
+              className="w-9 h-9 rounded-full bg-gray-800/80 hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition flex items-center justify-center cursor-pointer flex-shrink-0"
+              title="Discard voice note"
+              aria-label="Discard voice note"
+            >
+              <FiTrash2 size={16} />
+            </button>
+
+            {/* Send Voice Note Button */}
+            <button
+              type="button"
+              onClick={sendVoiceNote}
               disabled={isSending}
-              onChange={handleImageChange}
+              className="w-9 h-9 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 hover:opacity-90 transition flex items-center justify-center text-white shadow-md cursor-pointer flex-shrink-0 disabled:opacity-40"
+              title="Send voice note"
+              aria-label="Send voice note"
+            >
+              {isSending ? (
+                <ClipLoader size={14} color="#ffffff" />
+              ) : (
+                <FiSend size={16} className="-rotate-12 ml-0.5" />
+              )}
+            </button>
+          </div>
+        ) : (
+          <div className="w-full max-w-2xl bg-[#121212] border border-gray-800/80 rounded-full flex items-center px-4 py-2 text-white shadow-2xl gap-2 sm:gap-3">
+            <input
+              type="text"
+              value={textMessage}
+              onChange={(e) => setTextMessage(e.target.value)}
+              placeholder="Message..."
+              className="flex-1 bg-transparent text-sm text-white placeholder-gray-500 outline-none px-2"
             />
-          </label>
 
-          <button
-            type="submit"
-            disabled={!textMessage.trim() || isSending}
-            className="w-9 h-9 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 hover:opacity-90 transition flex items-center justify-center text-white shadow-md cursor-pointer flex-shrink-0 disabled:opacity-40"
-          >
-            {isSending && textMessage.trim() ? (
-              <ClipLoader size={14} color="#ffffff" />
+            <label className="cursor-pointer text-gray-400 hover:text-white transition p-1.5 rounded-full hover:bg-gray-800/60 flex items-center justify-center">
+              {isSending ? (
+                <ClipLoader size={18} color="#a855f7" />
+              ) : (
+                <FiImage size={21} />
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={isSending}
+                onChange={handleImageChange}
+              />
+            </label>
+
+            {textMessage.trim() ? (
+              <button
+                type="submit"
+                disabled={!textMessage.trim() || isSending}
+                className="w-9 h-9 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 hover:opacity-90 transition flex items-center justify-center text-white shadow-md cursor-pointer flex-shrink-0 disabled:opacity-40"
+                title="Send message"
+              >
+                {isSending && textMessage.trim() ? (
+                  <ClipLoader size={14} color="#ffffff" />
+                ) : (
+                  <FiSend size={16} className="-rotate-12 ml-0.5" />
+                )}
+              </button>
             ) : (
-              <FiSend size={16} className="-rotate-12 ml-0.5" />
+              <button
+                type="button"
+                onClick={startRecording}
+                disabled={isSending}
+                className="w-9 h-9 rounded-full bg-gray-800/90 hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-500 text-gray-300 hover:text-white transition flex items-center justify-center shadow-md cursor-pointer flex-shrink-0"
+                title="Record voice note"
+                aria-label="Record voice note"
+              >
+                <FiMic size={18} />
+              </button>
             )}
-          </button>
-        </div>
+          </div>
+        )}
       </form>
     </div>
   );
