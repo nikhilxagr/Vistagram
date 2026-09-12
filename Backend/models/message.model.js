@@ -33,6 +33,42 @@ const messageSchema = new mongoose.Schema(
       enum: ["text", "image", "audio", "reel_share"],
       default: "text",
     },
+    reactions: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        emoji: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
+    replyTo: {
+      messageId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Message",
+        default: null,
+      },
+      text: {
+        type: String,
+        default: "",
+      },
+      senderName: {
+        type: String,
+        default: "",
+      },
+      messageType: {
+        type: String,
+        default: "text",
+      },
+      image: {
+        type: String,
+        default: null,
+      },
+    },
   },
   {
     timestamps: true,

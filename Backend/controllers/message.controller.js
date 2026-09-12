@@ -59,6 +59,18 @@ export const sendMessage = async (req, res) => {
       messageType = "reel_share";
     }
 
+    let parsedReplyTo = null;
+    if (req.body.replyTo) {
+      try {
+        parsedReplyTo =
+          typeof req.body.replyTo === "string"
+            ? JSON.parse(req.body.replyTo)
+            : req.body.replyTo;
+      } catch {
+        parsedReplyTo = null;
+      }
+    }
+
     const newMessage = await Message.create({
       sender: senderId,
       receiver: receiverId,
@@ -67,6 +79,7 @@ export const sendMessage = async (req, res) => {
       audio: audioUrl,
       audioDuration: audioDuration ? Number(audioDuration) : 0,
       messageType,
+      replyTo: parsedReplyTo,
     });
 
     let conversation = await Conversation.findOne({
@@ -165,5 +178,70 @@ export const getprevUserChats = async (req, res) => {
   } catch (error) {
     console.error("Error retrieving user chats:", error);
     res.status(500).json({ message: "Failed to retrieve users", error: error.message });
+  }
+};
+
+export const reactToMessage = async (req, res) => {
+  try {
+    const userId = req.userId || req.user?._id;
+    const { messageId } = req.params;
+    const { emoji } = req.body;
+
+    if (!userId || !messageId || !emoji) {
+      return res.status(400).json({ message: "UserId, messageId and emoji required" });
+    }
+
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    if (!Array.isArray(message.reactions)) {
+      message.reactions = [];
+    }
+
+    const existingIndex = message.reactions.findIndex(
+      (r) => r.user?.toString() === userId.toString()
+    );
+
+    if (existingIndex > -1) {
+      // If same emoji tapped, remove it (toggle off)
+      if (message.reactions[existingIndex].emoji === emoji) {
+        message.reactions.splice(existingIndex, 1);
+      } else {
+        // Different emoji tapped, update it
+        message.reactions[existingIndex].emoji = emoji;
+      }
+    } else {
+      // Add new reaction
+      message.reactions.push({ user: userId, emoji });
+    }
+
+    await message.save();
+
+    // Notify participants via Socket.io
+    const senderSocketId = getReceiverSocketId(message.sender);
+    const receiverSocketId = getReceiverSocketId(message.receiver);
+
+    const payload = {
+      messageId: message._id,
+      reactions: message.reactions,
+      updatedBy: userId,
+    };
+
+    if (senderSocketId) {
+      io.to(senderSocketId).emit("messageReaction", payload);
+    }
+    if (receiverSocketId && receiverSocketId !== senderSocketId) {
+      io.to(receiverSocketId).emit("messageReaction", payload);
+    }
+
+    return res.status(200).json({
+      message: "Reaction updated successfully",
+      data: message.reactions,
+    });
+  } catch (error) {
+    console.error("Error reacting to message:", error);
+    return res.status(500).json({ message: "Failed to react to message", error: error.message });
   }
 };

@@ -1,7 +1,12 @@
 import express from "express";
 import isAuth from "../middleware/isAuth.js";
 import upload from "../middleware/multer.js";
-import { sendMessage, getAllMessages, getprevUserChats } from "../controllers/message.controller.js";
+import {
+  sendMessage,
+  getAllMessages,
+  getprevUserChats,
+  reactToMessage,
+} from "../controllers/message.controller.js";
 
 const messageRouter = express.Router();
 
@@ -14,6 +19,7 @@ messageRouter.post(
   ]),
   sendMessage
 );
+messageRouter.put("/react/:messageId", isAuth, reactToMessage);
 messageRouter.get("/getAll/:receiverId", isAuth, getAllMessages);
 messageRouter.get("/getall/:receiverId", isAuth, getAllMessages);
 messageRouter.get("/getAll", isAuth, getAllMessages);

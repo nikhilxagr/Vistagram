@@ -5,7 +5,7 @@ import { MdOutlineKeyboardBackspace } from "react-icons/md";
 import { FiImage, FiSend, FiX, FiMic, FiTrash2 } from "react-icons/fi";
 import { ClipLoader } from "react-spinners";
 import axios from "axios";
-import { setMessages } from "../redux/message.Slice";
+import { setMessages, updateMessageReaction } from "../redux/message.Slice";
 import { serverUrl } from "../App.jsx";
 import dp from "../assets/dp.png";
 import SenderMessage from "../components/SenderMessage";
@@ -24,7 +24,9 @@ function MessageArea() {
   const [isSending, setIsSending] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordDuration, setRecordDuration] = useState(0);
+  const [replyingTo, setReplyingTo] = useState(null);
 
+  const inputRef = useRef(null);
   const messagesEndRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -62,7 +64,7 @@ function MessageArea() {
     }
   }, [selectedUser]);
 
-  // Real-time socket listener for incoming new messages
+  // Real-time socket listener for incoming new messages & reactions
   useEffect(() => {
     if (!socket) return;
     const handleNewMessage = (newMsg) => {
@@ -72,13 +74,94 @@ function MessageArea() {
       }
     };
 
+    const handleMessageReaction = (payload) => {
+      dispatch(updateMessageReaction(payload));
+    };
+
     socket.on("newMessage", handleNewMessage);
-    return () => socket.off("newMessage", handleNewMessage);
+    socket.on("messageReaction", handleMessageReaction);
+    return () => {
+      socket.off("newMessage", handleNewMessage);
+      socket.off("messageReaction", handleMessageReaction);
+    };
   }, [socket, messages, targetUserId, dispatch]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const getReplySnapshot = () => {
+    if (!replyingTo) return null;
+    const isMyself =
+      (replyingTo.sender?._id || replyingTo.sender?.id || replyingTo.sender)?.toString() === currentUserId;
+    return {
+      messageId: replyingTo._id,
+      text: replyingTo.messages || replyingTo.message || "",
+      senderName: isMyself ? "You" : username || "User",
+      messageType: replyingTo.audio
+        ? "audio"
+        : replyingTo.image
+        ? "image"
+        : "text",
+      image: replyingTo.image || null,
+    };
+  };
+
+  const handleReactToMessage = async (messageId, emoji) => {
+    if (!messageId || !emoji) return;
+
+    // Optimistic local update
+    const targetMsg = messages?.find(
+      (m) => (m._id || m.id)?.toString() === messageId.toString()
+    );
+    if (targetMsg) {
+      const existingReactions = Array.isArray(targetMsg.reactions)
+        ? [...targetMsg.reactions]
+        : [];
+      const userIdx = existingReactions.findIndex(
+        (r) => r.user?.toString() === currentUserId
+      );
+      if (userIdx > -1) {
+        if (existingReactions[userIdx].emoji === emoji) {
+          existingReactions.splice(userIdx, 1);
+        } else {
+          existingReactions[userIdx] = { user: currentUserId, emoji };
+        }
+      } else {
+        existingReactions.push({ user: currentUserId, emoji });
+      }
+      dispatch(
+        updateMessageReaction({ messageId, reactions: existingReactions })
+      );
+    }
+
+    try {
+      await axios.put(
+        `${serverUrl}/api/messages/react/${messageId}`,
+        { emoji },
+        { withCredentials: true }
+      );
+    } catch (err) {
+      console.error("Error reacting to message:", err);
+    }
+  };
+
+  const handleReply = (msg) => {
+    setReplyingTo(msg);
+    inputRef.current?.focus();
+  };
+
+  const handleScrollToMessage = (messageId) => {
+    if (!messageId) return;
+    const el = document.getElementById(`msg-${messageId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("bg-indigo-500/20", "rounded-2xl", "transition-colors", "duration-500");
+      setTimeout(() => {
+        el.classList.remove("bg-indigo-500/20", "rounded-2xl");
+      }, 1200);
+    }
+  };
 
   // Direct image send without preview
   const handleImageChange = async (e) => {
@@ -92,6 +175,12 @@ function MessageArea() {
 
     const formData = new FormData();
     formData.append("image", file);
+
+    const replySnapshot = getReplySnapshot();
+    if (replySnapshot) {
+      formData.append("replyTo", JSON.stringify(replySnapshot));
+      setReplyingTo(null);
+    }
 
     try {
       const res = await axios.post(
@@ -123,6 +212,12 @@ function MessageArea() {
 
     const formData = new FormData();
     formData.append("message", textMessage.trim());
+
+    const replySnapshot = getReplySnapshot();
+    if (replySnapshot) {
+      formData.append("replyTo", JSON.stringify(replySnapshot));
+      setReplyingTo(null);
+    }
 
     const tempText = textMessage;
     setTextMessage("");
@@ -279,6 +374,12 @@ function MessageArea() {
       formData.append("audio", audioFile);
       formData.append("audioDuration", Math.max(1, duration));
 
+      const replySnapshot = getReplySnapshot();
+      if (replySnapshot) {
+        formData.append("replyTo", JSON.stringify(replySnapshot));
+        setReplyingTo(null);
+      }
+
       try {
         const res = await axios.post(
           `${serverUrl}/api/messages/send/${targetUserId}`,
@@ -381,12 +482,21 @@ function MessageArea() {
             const isMe = currentUserId && senderId && currentUserId === senderId;
 
             return isMe ? (
-              <SenderMessage key={msg._id || idx} message={msg} />
+              <SenderMessage
+                key={msg._id || idx}
+                message={msg}
+                onReact={handleReactToMessage}
+                onReply={handleReply}
+                onScrollToMessage={handleScrollToMessage}
+              />
             ) : (
               <ReceiverMessage
                 key={msg._id || idx}
                 message={msg}
                 authorImage={profileImage}
+                onReact={handleReactToMessage}
+                onReply={handleReply}
+                onScrollToMessage={handleScrollToMessage}
               />
             );
           })
@@ -401,114 +511,150 @@ function MessageArea() {
         )}
         <div ref={messagesEndRef} />
       </div>
-      <form
-        onSubmit={handleSendMessage}
-        className="w-full pb-5 pt-2 px-4 flex justify-center bg-black sticky bottom-0 z-40"
-      >
-        {isRecording ? (
-          <div className="w-full max-w-2xl bg-gradient-to-r from-gray-950 via-[#18181b] to-gray-950 border border-red-500/40 rounded-full flex items-center justify-between px-4 py-2 text-white shadow-[0_0_25px_rgba(239,68,68,0.15)] gap-3">
-            {/* Live recording indicator & timer */}
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.9)]" />
-              <span className="text-xs font-mono font-bold text-red-400">
-                {Math.floor(recordDuration / 60)}:{(recordDuration % 60).toString().padStart(2, "0")}
-              </span>
-            </div>
 
-            {/* Sound wave equalizer animation */}
-            <div className="flex-1 flex items-center justify-center gap-[3px] h-6 px-2 overflow-hidden">
-              {[35, 65, 90, 50, 80, 40, 100, 75, 45, 85, 60, 95, 50, 70, 40, 85, 60, 100].map((h, i) => (
-                <div
-                  key={i}
-                  style={{
-                    height: `${h}%`,
-                    animationDuration: `${0.6 + (i % 4) * 0.2}s`,
-                  }}
-                  className="w-1 bg-gradient-to-t from-red-500 to-pink-400 rounded-full animate-pulse"
-                />
-              ))}
+      <div className="w-full pb-5 pt-2 px-4 flex flex-col items-center bg-black sticky bottom-0 z-40">
+        {/* Active Reply Banner */}
+        {replyingTo && (
+          <div className="w-full max-w-2xl mb-2 bg-[#18181b]/95 backdrop-blur-md border border-gray-800 rounded-2xl px-4 py-2 flex items-center justify-between shadow-xl animate-in fade-in slide-in-from-bottom-2 select-none">
+            <div className="flex items-center gap-3 overflow-hidden">
+              <div className="w-1 h-8 bg-gradient-to-b from-purple-500 to-indigo-500 rounded-full flex-shrink-0" />
+              <div className="flex flex-col text-left overflow-hidden">
+                <span className="text-[11px] font-bold text-purple-400">
+                  Replying to{" "}
+                  {((replyingTo.sender?._id || replyingTo.sender?.id || replyingTo.sender)?.toString() === currentUserId)
+                    ? "yourself"
+                    : `@${username}`}
+                </span>
+                <span className="text-xs text-gray-300 truncate max-w-xs sm:max-w-md">
+                  {replyingTo.audio
+                    ? "🎤 Voice message"
+                    : replyingTo.image
+                    ? "📷 Photo"
+                    : replyingTo.messages || replyingTo.message || "Message"}
+                </span>
+              </div>
             </div>
-
-            {/* Discard / Cancel Button */}
             <button
               type="button"
-              onClick={cancelRecording}
-              className="w-9 h-9 rounded-full bg-gray-800/80 hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition flex items-center justify-center cursor-pointer flex-shrink-0"
-              title="Discard voice note"
-              aria-label="Discard voice note"
+              onClick={() => setReplyingTo(null)}
+              className="p-1 rounded-full text-gray-400 hover:text-white hover:bg-gray-800 transition cursor-pointer flex-shrink-0"
+              title="Cancel reply"
             >
-              <FiTrash2 size={16} />
-            </button>
-
-            {/* Send Voice Note Button */}
-            <button
-              type="button"
-              onClick={sendVoiceNote}
-              disabled={isSending}
-              className="w-9 h-9 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 hover:opacity-90 transition flex items-center justify-center text-white shadow-md cursor-pointer flex-shrink-0 disabled:opacity-40"
-              title="Send voice note"
-              aria-label="Send voice note"
-            >
-              {isSending ? (
-                <ClipLoader size={14} color="#ffffff" />
-              ) : (
-                <FiSend size={16} className="-rotate-12 ml-0.5" />
-              )}
+              <FiX size={16} />
             </button>
           </div>
-        ) : (
-          <div className="w-full max-w-2xl bg-[#121212] border border-gray-800/80 rounded-full flex items-center px-4 py-2 text-white shadow-2xl gap-2 sm:gap-3">
-            <input
-              type="text"
-              value={textMessage}
-              onChange={(e) => setTextMessage(e.target.value)}
-              placeholder="Message..."
-              className="flex-1 bg-transparent text-sm text-white placeholder-gray-500 outline-none px-2"
-            />
+        )}
 
-            <label className="cursor-pointer text-gray-400 hover:text-white transition p-1.5 rounded-full hover:bg-gray-800/60 flex items-center justify-center">
-              {isSending ? (
-                <ClipLoader size={18} color="#a855f7" />
-              ) : (
-                <FiImage size={21} />
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                disabled={isSending}
-                onChange={handleImageChange}
-              />
-            </label>
+        <form
+          onSubmit={handleSendMessage}
+          className="w-full flex justify-center"
+        >
+          {isRecording ? (
+            <div className="w-full max-w-2xl bg-gradient-to-r from-gray-950 via-[#18181b] to-gray-950 border border-red-500/40 rounded-full flex items-center justify-between px-4 py-2 text-white shadow-[0_0_25px_rgba(239,68,68,0.15)] gap-3">
+              {/* Live recording indicator & timer */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.9)]" />
+                <span className="text-xs font-mono font-bold text-red-400">
+                  {Math.floor(recordDuration / 60)}:{(recordDuration % 60).toString().padStart(2, "0")}
+                </span>
+              </div>
 
-            {textMessage.trim() ? (
+              {/* Sound wave equalizer animation */}
+              <div className="flex-1 flex items-center justify-center gap-[3px] h-6 px-2 overflow-hidden">
+                {[35, 65, 90, 50, 80, 40, 100, 75, 45, 85, 60, 95, 50, 70, 40, 85, 60, 100].map((h, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      height: `${h}%`,
+                      animationDuration: `${0.6 + (i % 4) * 0.2}s`,
+                    }}
+                    className="w-1 bg-gradient-to-t from-red-500 to-pink-400 rounded-full animate-pulse"
+                  />
+                ))}
+              </div>
+
+              {/* Discard / Cancel Button */}
               <button
-                type="submit"
-                disabled={!textMessage.trim() || isSending}
-                className="w-9 h-9 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 hover:opacity-90 transition flex items-center justify-center text-white shadow-md cursor-pointer flex-shrink-0 disabled:opacity-40"
-                title="Send message"
+                type="button"
+                onClick={cancelRecording}
+                className="w-9 h-9 rounded-full bg-gray-800/80 hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition flex items-center justify-center cursor-pointer flex-shrink-0"
+                title="Discard voice note"
+                aria-label="Discard voice note"
               >
-                {isSending && textMessage.trim() ? (
+                <FiTrash2 size={16} />
+              </button>
+
+              {/* Send Voice Note Button */}
+              <button
+                type="button"
+                onClick={sendVoiceNote}
+                disabled={isSending}
+                className="w-9 h-9 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 hover:opacity-90 transition flex items-center justify-center text-white shadow-md cursor-pointer flex-shrink-0 disabled:opacity-40"
+                title="Send voice note"
+                aria-label="Send voice note"
+              >
+                {isSending ? (
                   <ClipLoader size={14} color="#ffffff" />
                 ) : (
                   <FiSend size={16} className="-rotate-12 ml-0.5" />
                 )}
               </button>
-            ) : (
-              <button
-                type="button"
-                onClick={startRecording}
-                disabled={isSending}
-                className="w-9 h-9 rounded-full bg-gray-800/90 hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-500 text-gray-300 hover:text-white transition flex items-center justify-center shadow-md cursor-pointer flex-shrink-0"
-                title="Record voice note"
-                aria-label="Record voice note"
-              >
-                <FiMic size={18} />
-              </button>
-            )}
-          </div>
-        )}
-      </form>
+            </div>
+          ) : (
+            <div className="w-full max-w-2xl bg-[#121212] border border-gray-800/80 rounded-full flex items-center px-4 py-2 text-white shadow-2xl gap-2 sm:gap-3">
+              <input
+                ref={inputRef}
+                type="text"
+                value={textMessage}
+                onChange={(e) => setTextMessage(e.target.value)}
+                placeholder="Message..."
+                className="flex-1 bg-transparent text-sm text-white placeholder-gray-500 outline-none px-2"
+              />
+
+              <label className="cursor-pointer text-gray-400 hover:text-white transition p-1.5 rounded-full hover:bg-gray-800/60 flex items-center justify-center">
+                {isSending ? (
+                  <ClipLoader size={18} color="#a855f7" />
+                ) : (
+                  <FiImage size={21} />
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={isSending}
+                  onChange={handleImageChange}
+                />
+              </label>
+
+              {textMessage.trim() ? (
+                <button
+                  type="submit"
+                  disabled={!textMessage.trim() || isSending}
+                  className="w-9 h-9 rounded-full bg-gradient-to-r from-purple-600 to-pink-500 hover:opacity-90 transition flex items-center justify-center text-white shadow-md cursor-pointer flex-shrink-0 disabled:opacity-40"
+                  title="Send message"
+                >
+                  {isSending && textMessage.trim() ? (
+                    <ClipLoader size={14} color="#ffffff" />
+                  ) : (
+                    <FiSend size={16} className="-rotate-12 ml-0.5" />
+                  )}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={startRecording}
+                  disabled={isSending}
+                  className="w-9 h-9 rounded-full bg-gray-800/90 hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-500 text-gray-300 hover:text-white transition flex items-center justify-center shadow-md cursor-pointer flex-shrink-0"
+                  title="Record voice note"
+                  aria-label="Record voice note"
+                >
+                  <FiMic size={18} />
+                </button>
+              )}
+            </div>
+          )}
+        </form>
+      </div>
     </div>
   );
 }

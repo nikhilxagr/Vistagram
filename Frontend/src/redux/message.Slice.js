@@ -31,8 +31,17 @@ const messageSlice = createSlice({
     setMessages: (state, action) => {
       state.messages = action.payload;
     },
+    updateMessageReaction: (state, action) => {
+      const { messageId, reactions } = action.payload;
+      const msg = state.messages.find(
+        (m) => (m._id || m.id)?.toString() === messageId?.toString()
+      );
+      if (msg) {
+        msg.reactions = reactions;
+      }
+    },
   },
 });
 
-export const { setSelectedUser, setMessages } = messageSlice.actions;
+export const { setSelectedUser, setMessages, updateMessageReaction } = messageSlice.actions;
 export default messageSlice.reducer;
