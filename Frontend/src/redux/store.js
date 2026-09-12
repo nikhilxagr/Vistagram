@@ -6,6 +6,7 @@ import storyReducer from "./story.slice";
 import messageReducer from "./message.Slice";
 import socketReducer from "./socket.Slice";
 import notificationReducer from "./notification.Slice";
+import callReducer from "./call.Slice";
 
 const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ const store = configureStore({
     message: messageReducer,
     socket: socketReducer,
     notification: notificationReducer,
+    call: callReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { MdOutlineKeyboardBackspace } from "react-icons/md";
-import { FiImage, FiSend, FiX, FiMic, FiTrash2 } from "react-icons/fi";
+import { FiImage, FiSend, FiX, FiMic, FiTrash2, FiPhone, FiVideo } from "react-icons/fi";
 import { ClipLoader } from "react-spinners";
 import axios from "axios";
 import { setMessages, updateMessageReaction } from "../redux/message.Slice";
+import { startCall } from "../redux/call.Slice";
 import { serverUrl } from "../App.jsx";
 import dp from "../assets/dp.png";
 import SenderMessage from "../components/SenderMessage";
@@ -427,50 +428,84 @@ function MessageArea() {
     );
   }
 
+  const handleStartVoiceCall = () => {
+    if (!selectedUser) return;
+    dispatch(startCall({ receiver: selectedUser, isVideoCall: false }));
+  };
+
+  const handleStartVideoCall = () => {
+    if (!selectedUser) return;
+    dispatch(startCall({ receiver: selectedUser, isVideoCall: true }));
+  };
+
   return (
     <div className="w-full h-screen bg-black flex flex-col justify-between overflow-hidden select-none">
       {/* Top Header */}
-      <div className="w-full flex items-center gap-3 px-4 py-3 bg-black border-b border-gray-900 sticky top-0 z-50">
-        <button
-          onClick={() => navigate(-1)}
-          className="text-white hover:text-gray-300 p-1 cursor-pointer transition lg:hidden"
-          aria-label="Back"
-        >
-          <MdOutlineKeyboardBackspace size={26} />
-        </button>
+      <div className="w-full flex items-center justify-between px-4 py-3 bg-black border-b border-gray-900 sticky top-0 z-50">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="text-white hover:text-gray-300 p-1 cursor-pointer transition lg:hidden"
+            aria-label="Back"
+          >
+            <MdOutlineKeyboardBackspace size={26} />
+          </button>
 
-        <div
-          onClick={() => navigate(`/profile/${username}`)}
-          className="flex items-center gap-3 cursor-pointer group"
-        >
-          <div className="relative">
-            <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-800 bg-gray-900 flex-shrink-0">
-              <img
-                src={profileImage}
-                alt={username}
-                className="w-full h-full object-cover group-hover:scale-105 transition"
-              />
-            </div>
-            {isOnline && (
-              <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-black rounded-full shadow-md" />
-            )}
-          </div>
-
-          <div className="flex flex-col text-left">
-            <span className="text-sm font-bold text-white leading-tight group-hover:underline">
-              {username}
-            </span>
-            <div className="text-xs text-gray-400 font-medium flex items-center gap-1.5">
-              {isOnline ? (
-                <>
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                  <span className="text-green-400 font-semibold">Active now</span>
-                </>
-              ) : (
-                name || "Offline"
+          <div
+            onClick={() => navigate(`/profile/${username}`)}
+            className="flex items-center gap-3 cursor-pointer group"
+          >
+            <div className="relative">
+              <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-800 bg-gray-900 flex-shrink-0">
+                <img
+                  src={profileImage}
+                  alt={username}
+                  className="w-full h-full object-cover group-hover:scale-105 transition"
+                />
+              </div>
+              {isOnline && (
+                <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-black rounded-full shadow-md" />
               )}
             </div>
+
+            <div className="flex flex-col text-left">
+              <span className="text-sm font-bold text-white leading-tight group-hover:underline">
+                {username}
+              </span>
+              <div className="text-xs text-gray-400 font-medium flex items-center gap-1.5">
+                {isOnline ? (
+                  <>
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                    <span className="text-green-400 font-semibold">Active now</span>
+                  </>
+                ) : (
+                  name || "Offline"
+                )}
+              </div>
+            </div>
           </div>
+        </div>
+
+        {/* Right side Call Action Buttons */}
+        <div className="flex items-center gap-1 sm:gap-2">
+          <button
+            type="button"
+            onClick={handleStartVoiceCall}
+            className="p-2 rounded-full text-gray-300 hover:text-white hover:bg-gray-800/80 transition cursor-pointer"
+            title="Start voice call"
+            aria-label="Start voice call"
+          >
+            <FiPhone size={20} />
+          </button>
+          <button
+            type="button"
+            onClick={handleStartVideoCall}
+            className="p-2 rounded-full text-gray-300 hover:text-white hover:bg-gray-800/80 transition cursor-pointer"
+            title="Start video call"
+            aria-label="Start video call"
+          >
+            <FiVideo size={21} />
+          </button>
         </div>
       </div>
 

@@ -25,6 +25,8 @@ import { setSocket, setOnlineUsers } from "./redux/socket.Slice";
 import { setPostLikes, setPostComments } from "./redux/post.Slice";
 import { addNotification, removeNotification, setNotifications } from "./redux/notification.Slice";
 import { updateStoryLikes } from "./redux/story.slice";
+import { setIncomingCall } from "./redux/call.Slice";
+import CallModal from "./components/CallModal";
 
 export const serverUrl = import.meta.env.VITE_SERVER_URL || "http://localhost:8000";
 
@@ -86,6 +88,16 @@ function App() {
         dispatch(removeNotification(data));
       });
 
+      socketIo.on("incomingCall", (data) => {
+        dispatch(
+          setIncomingCall({
+            caller: data.from,
+            signal: data.signal,
+            isVideoCall: data.isVideoCall,
+          })
+        );
+      });
+
       return () => {
         socketIo.close();
         dispatch(setSocket(null));
@@ -109,6 +121,7 @@ function App() {
 
   return (
     <>
+      <CallModal />
       {showSplash && (
         <SplashScreen onFinish={handleSplashFinish} />
       )}
